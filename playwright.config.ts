@@ -32,6 +32,7 @@ export default defineConfig({
         launchOptions: {
           args: [
             '--use-fake-device-for-media-capture',
+            '--use-fake-device-for-media-stream',
             '--use-fake-ui-for-media-stream',
             '--autoplay-policy=no-user-gesture-required',
             '--auto-accept-this-tab-capture',
