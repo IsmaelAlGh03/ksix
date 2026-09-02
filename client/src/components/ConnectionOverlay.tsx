@@ -9,7 +9,6 @@ interface ConnectionOverlayProps {
   names: Record<string, string>;
   width: number;
   height: number;
-  // The ring leaves the tiles behind, so it has to carry the names the captions would have given.
   labelled?: boolean;
 }
 
@@ -33,7 +32,6 @@ function figuresFor(link: MeshLink): string[] {
 
 const MAX_LABELS = 3;
 
-// The earned-label rule bounds which links are annotated, not how many, so labels stacked.
 function labelledKeys(links: MeshLink[]): Set<string> {
   const ranked = links
     .filter(isWrong)

@@ -12,7 +12,6 @@ export function Lightbox({ attachment, onClose }: LightboxProps): JSX.Element {
   const dialog = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
 
-  // Whatever had focus when this opened gets it back when it closes.
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     close.current?.focus();
@@ -55,7 +54,6 @@ export function Lightbox({ attachment, onClose }: LightboxProps): JSX.Element {
       onKeyDown={trap}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/85 p-6"
     >
-      {/* Escape and Close carry this for the keyboard; the backdrop is mouse convenience only. */}
       <div aria-hidden="true" onClick={onClose} className="absolute inset-0" />
 
       <img

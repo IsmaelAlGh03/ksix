@@ -52,7 +52,6 @@ export function buildLinks(
         continue;
       }
 
-      // Both ends report the same link; the lower socketId wins so the figure cannot alternate.
       const preferred = a < b ? a : b;
       const other = a < b ? b : a;
       const chosen =

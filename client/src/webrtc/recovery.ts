@@ -22,7 +22,6 @@ export function nextAction(
   if (connectionState === 'disconnected') return 'wait';
   if (connectionState !== 'failed') return 'idle';
 
-  // Exactly one peer per pair is impolite; only it offers, so only it can restart.
   if (!options.canOffer) return 'wait';
   if (state.attempts < MAX_RESTARTS) return 'restart';
   if (options.hasTurn && !state.relayTried) return 'relay';

@@ -85,7 +85,6 @@ export function createChannelLink(options: ChannelLinkOptions): ChannelLink {
       else queued.push(message);
     },
 
-    // Attachments are thousands of messages, so they wait on the buffer rather than flooding it.
     async sendPaced(messages) {
       for (const message of messages) {
         if (closed) return;

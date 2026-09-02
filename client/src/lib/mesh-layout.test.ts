@@ -30,7 +30,6 @@ describe('pathFor', () => {
     expect(pathFor(nodes[0]!, nodes[4]!, nodes)).toBe('M100 50 L300 400');
   });
 
-  // Column skips cannot occur: the grid never exceeds two rows, and below sm the ring replaces it.
   it('leaves a stacked column straight, however many nodes it holds', () => {
     const nodes: NodePoint[] = [
       { id: 'a', x: 100, y: 50 },

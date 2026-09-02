@@ -56,12 +56,10 @@ export function ParticipantTile({
   const settings = videoSettings(stream);
   const hasVideo = settings !== null && cameraOn;
 
-  // A peer transmits black frames rather than stopping, so only their announcement tells us.
   const announcedOff = !isLocal && state === 'connected' && !cameraOn;
   const showsIdentity = announcedOff || lost;
   const showsVideo = hasVideo && !showsIdentity;
 
-  // showsVideo remounts the element, and the stream identity never changes, so it has to be a dep.
   useEffect(() => {
     if (video.current !== null) video.current.srcObject = stream;
   }, [stream, showsVideo]);
@@ -80,7 +78,6 @@ export function ParticipantTile({
 
   if (isLocal && !micOn && stream !== null) localFields.push('Mic off');
 
-  // Quality figures outlive the link that measured them, so the state has to outrank them.
   const remoteStatus = REMOTE_STATUS[state];
   const remoteFields = remoteStatus !== null ? [remoteStatus] : (fields ?? ['Connected']);
   if (!isLocal && !micOn && state === 'connected') remoteFields.push('Mic off');
@@ -92,7 +89,7 @@ export function ParticipantTile({
     <figure className="m-0 flex flex-col">
       <div
         data-dimmed={dimmed || undefined}
-        className={`relative aspect-video border-[1.5px] ${
+        className={`relative aspect-video min-h-0 border-[1.5px] ${
           degraded ? 'border-alert' : 'border-ink'
         } ${dimmed ? 'opacity-40' : ''}`}
       >

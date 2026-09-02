@@ -191,7 +191,6 @@ describe('ConnectionOverlay', () => {
     expect(drawn).not.toContain('600ms');
     expect(drawn).not.toContain('500ms');
 
-    // Every bad link keeps its stroke; only the labels are capped.
     expect(container.querySelectorAll('path[data-link]')).toHaveLength(5);
   });
 

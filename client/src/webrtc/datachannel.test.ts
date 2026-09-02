@@ -158,7 +158,6 @@ describe('createChannelLink', () => {
     ];
     const sending = link.sendPaced(pieces);
 
-    // A buffer already over the mark holds even the first chunk back.
     await Promise.resolve();
     expect(channel.send).not.toHaveBeenCalled();
 

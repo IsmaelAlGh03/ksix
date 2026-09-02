@@ -34,7 +34,6 @@ async function toEntry(message: ChatMessage): Promise<TranscriptEntry> {
 
   if (message.attachment === undefined) return entry;
 
-  // The blob's type was coerced through the allowlist on receive; the message kept the peer's word for it.
   const read = await readImage(message.attachment.url);
 
   return {

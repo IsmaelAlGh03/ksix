@@ -61,7 +61,6 @@ describe('VideoGrid', () => {
 
     const { container } = render(<VideoGrid localStream={null} participants={participants} />);
 
-    // The peer still transmitting keeps its video; the one who announced off must not.
     expect(container.querySelectorAll('video')).toHaveLength(1);
     expect(screen.getByText('Mic off')).toBeInTheDocument();
   });

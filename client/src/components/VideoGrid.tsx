@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConnectionOverlay } from './ConnectionOverlay';
 import { ParticipantTile, type TileState } from './ParticipantTile';
+import { fitGrid } from '../lib/grid-fit';
 import { ringNodes, type NodePoint } from '../lib/mesh-layout';
 import { formatFields, healthFor } from '../webrtc/quality';
 import { LOCAL_ID, type MeshLink } from '../webrtc/mesh-links';
@@ -14,6 +15,7 @@ interface VideoGridProps {
   links?: MeshLink[];
   showLinks?: boolean;
   strip?: boolean;
+  onRequiredHeight?: (height: number) => void;
 }
 
 const COLUMNS = [1, 1, 2, 3, 2, 3, 3];
@@ -24,8 +26,8 @@ const COLUMN_CLASS: Record<number, string> = {
   3: 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3',
 };
 
-const CAPTION_HEIGHT = 54;
-const MIN_MEDIA_HEIGHT = 96;
+const CAPTION_FALLBACK = 58;
+const GAP = 24;
 
 function tileState(connectionState: RTCPeerConnectionState): TileState {
   if (connectionState === 'connected') return 'connected';
@@ -33,18 +35,15 @@ function tileState(connectionState: RTCPeerConnectionState): TileState {
   return 'connecting';
 }
 
-// Tiles are 16:9 and sized by width, so fitting the height means capping the grid's width.
-function fitWidth(box: HTMLElement, columns: number, count: number): number | null {
-  // Below sm the column class collapses, so the row maths would not describe what renders.
-  if (window.innerWidth < 640) return null;
+function captionHeight(grid: HTMLElement): number {
+  const tile = grid.firstElementChild;
+  const media = tile?.firstElementChild;
+  if (tile === null || tile === undefined || media === null || media === undefined) {
+    return CAPTION_FALLBACK;
+  }
 
-  const rows = Math.ceil(count / columns);
-  const gap = 24;
-  const perRow = (box.clientHeight - gap * (rows - 1)) / rows;
-  const media = Math.max(perRow - CAPTION_HEIGHT, MIN_MEDIA_HEIGHT);
-  const width = ((media * 16) / 9) * columns + gap * (columns - 1);
-
-  return width < box.clientWidth ? Math.round(width) : null;
+  const rest = tile.clientHeight - media.clientHeight;
+  return rest > 0 ? rest : CAPTION_FALLBACK;
 }
 
 export function VideoGrid({
@@ -55,10 +54,13 @@ export function VideoGrid({
   links = [],
   showLinks = false,
   strip = false,
+  onRequiredHeight,
 }: VideoGridProps): JSX.Element {
   const box = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
+  const report = useRef(onRequiredHeight);
   const [maxWidth, setMaxWidth] = useState<number | null>(null);
+  const [fits, setFits] = useState(true);
   const [nodes, setNodes] = useState<NodePoint[]>([]);
   const [frame, setFrame] = useState({ width: 0, height: 0, ring: false });
 
@@ -67,21 +69,37 @@ export function VideoGrid({
   const ids = [LOCAL_ID, ...participants.map((participant) => participant.socketId)];
   const idKey = ids.join(',');
 
+  report.current = onRequiredHeight;
+
   useEffect(() => {
     const element = box.current;
     if (element === null) return;
 
     const measure = (): void => {
-      // A strip is height-driven and single-row, so the width cap has nothing to solve.
-      setMaxWidth(strip ? null : fitWidth(element, columns, headcount));
-
       const container = grid.current;
       if (container === null) return;
+
+      if (strip || window.innerWidth < 640) {
+        setMaxWidth(null);
+        setFits(container.getBoundingClientRect().height <= element.clientHeight);
+      } else {
+        const fit = fitGrid({
+          width: element.clientWidth,
+          height: element.clientHeight,
+          columns,
+          count: headcount,
+          caption: captionHeight(container),
+          gap: GAP,
+        });
+
+        setMaxWidth(fit.maxWidth);
+        setFits(fit.required <= element.clientHeight);
+        report.current?.(fit.required);
+      }
 
       const members = idKey.split(',');
       const origin = container.getBoundingClientRect();
 
-      // Below sm the column is taller than the screen, so the ring pins to the scrolling box.
       if (window.innerWidth < 640) {
         const band = element.parentElement?.getBoundingClientRect() ?? origin;
         setFrame({ width: band.width, height: band.height, ring: true });
@@ -111,6 +129,7 @@ export function VideoGrid({
 
     const observer = new ResizeObserver(measure);
     observer.observe(element);
+    if (grid.current !== null) observer.observe(grid.current);
     return () => observer.disconnect();
   }, [columns, headcount, idKey, showLinks, strip]);
 
@@ -136,10 +155,9 @@ export function VideoGrid({
       className={
         strip
           ? 'flex shrink-0 justify-center overflow-x-auto'
-          : 'flex min-h-0 flex-1 items-center justify-center'
+          : `flex min-h-0 flex-1 justify-center ${fits ? 'items-center' : 'items-start'}`
       }
     >
-      {/* The overlay is inset to this box, so it has to be the grid's box exactly, not wider. */}
       <div
         className={strip ? 'relative' : 'relative mx-auto w-full'}
         style={maxWidth === null ? undefined : { maxWidth }}
@@ -181,7 +199,7 @@ export function VideoGrid({
               micOn={peer.micOn}
               cameraOn={peer.cameraOn}
               dimmed={showLinks}
-            compact={strip}
+              compact={strip}
               relayed={peer.quality?.relayed ?? false}
               degraded={peer.quality?.bucket === 'poor'}
               lost={peer.lost}

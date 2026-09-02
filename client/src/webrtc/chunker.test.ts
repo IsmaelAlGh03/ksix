@@ -184,7 +184,6 @@ describe('encodeChunk / decodeChunk', () => {
 });
 
 describe('describeAttachment', () => {
-  // Binary units throughout, because the 5MB cap is 5 × 1024 × 1024.
   it('reads as a measured figure, in the units the readouts use', () => {
     expect(describeAttachment({ name: 'shot.png', size: 2.4 * 1024 * 1024 })).toBe('shot.png · 2.4MB');
     expect(describeAttachment({ name: 'tiny.png', size: 4096 })).toBe('tiny.png · 4KB');

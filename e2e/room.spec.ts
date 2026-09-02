@@ -131,3 +131,32 @@ test('a shared screen reaches the peer and blocks their share button', async ({ 
     await bravo.close();
   }
 });
+
+test('four tiles clear the header at 720, where two rows do not fit unaided', async ({
+  browser,
+}) => {
+  const roomId = newRoomId('fit');
+  const contexts = await Promise.all([0, 1, 2, 3].map(() => browser.newContext()));
+
+  try {
+    const names = ['Alfa', 'Bravo', 'Charlie', 'Delta'];
+    for (const [index, context] of contexts.entries()) {
+      await joinRoom(context, roomId, names[index]!);
+    }
+
+    const page = (await contexts[0]!.pages())[0]!;
+    const tiles = page.getByRole('figure');
+    await expect(tiles).toHaveCount(4);
+    await expect(tile(page, 'Bravo')).toContainText('Direct');
+
+    const heading = await page.getByRole('heading', { level: 1 }).boundingBox();
+    const viewport = page.viewportSize();
+
+    for (const box of await Promise.all((await tiles.all()).map((one) => one.boundingBox()))) {
+      expect(box!.y).toBeGreaterThanOrEqual(heading!.y + heading!.height);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
+    }
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});

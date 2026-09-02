@@ -82,7 +82,6 @@ export function createReassembler(): Reassembler {
 
   return {
     begin(meta) {
-      // The sender's checks prove nothing here — a peer controls every field of this message.
       if (!isAllowedImage(meta.mime)) return false;
       if (meta.size > MAX_ATTACHMENT_BYTES || meta.size <= 0 || meta.chunks <= 0) return false;
       pending.set(meta.id, { meta, pieces: new Array<Uint8Array | undefined>(meta.chunks) });

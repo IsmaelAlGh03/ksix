@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChatPanel } from '../components/ChatPanel';
 import { ControlBar } from '../components/ControlBar';
@@ -28,6 +28,11 @@ export function RoomPage(): JSX.Element {
   const { status, localStream, participants, mediaError } = room;
   const occupancy = useRoomCount(roomId ?? '', status === 'idle');
   const [linksView, setLinksView] = useState(false);
+  const area = useRef<HTMLDivElement>(null);
+  const expanded = useRef(0);
+  const reclaimed = useRef(0);
+  const [required, setRequired] = useState(0);
+  const [tight, setTight] = useState(false);
   const links = useMemo(
     () => buildLinks(participants, room.remoteStats),
     [participants, room.remoteStats],
@@ -44,6 +49,31 @@ export function RoomPage(): JSX.Element {
 
   const inRoom = status === 'connecting' || status === 'connected';
   const showsCount = inRoom;
+
+  const compact = stage !== null || tight;
+
+  useEffect(() => {
+    const element = area.current;
+    if (element === null) return;
+
+    const decide = (): void => {
+      const height = element.clientHeight;
+
+      if (compact) {
+        if (reclaimed.current === 0) reclaimed.current = Math.max(height - expanded.current, 0);
+      } else {
+        expanded.current = height;
+      }
+
+      setTight(required > height - (compact ? reclaimed.current : 0));
+    };
+
+    decide();
+
+    const observer = new ResizeObserver(decide);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [compact, required, inRoom]);
 
   return (
     <main className="mx-auto flex h-full max-w-6xl flex-col px-6 py-8">
@@ -114,7 +144,7 @@ export function RoomPage(): JSX.Element {
 
       {showsCount && (
         <>
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-8">
+          <div ref={area} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-8">
             {stage !== null && (
               <Stage
                 stream={stage.stream}
@@ -130,6 +160,7 @@ export function RoomPage(): JSX.Element {
               links={links}
               showLinks={linksView}
               strip={stage !== null}
+              onRequiredHeight={setRequired}
             />
           </div>
           <ControlBar
@@ -152,7 +183,7 @@ export function RoomPage(): JSX.Element {
             onSend={room.sendChat}
             onAttach={room.sendAttachment}
             attachmentError={room.attachmentError}
-            compact={stage !== null}
+            compact={compact}
           />
         </>
       )}

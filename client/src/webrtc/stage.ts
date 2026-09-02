@@ -20,8 +20,6 @@ export function stageHolder(
   const claims = claimants(participants);
   if (localSharing !== null) claims.push(localSocketId);
 
-  // Two people can press within one presence round trip, so the winner has to be the same on
-  // every client. Lowest socket id, as in peers.ts and mesh-links.ts.
   const winner = claims.sort()[0];
   if (winner === undefined) return null;
   return winner === localSocketId && localSharing !== null ? LOCAL_ID : winner;

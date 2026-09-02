@@ -75,7 +75,6 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
     };
   }, [cameraId, microphoneId]);
 
-  // Once Join hands the stream to the session, the room owns it and must not have it stopped.
   useEffect(
     () => () => {
       if (!handedOver.current) held.current?.getTracks().forEach((track) => track.stop());

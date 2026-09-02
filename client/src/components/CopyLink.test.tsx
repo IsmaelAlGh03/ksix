@@ -5,7 +5,6 @@ import { CopyLink } from './CopyLink';
 
 const URL_UNDER_TEST = 'https://mesh.example/room/quiet-harbour';
 
-// userEvent.setup() installs a clipboard stub of its own, so ours has to land after it.
 function arrange(overrides: Partial<Parameters<typeof CopyLink>[0]> = {}) {
   const user = userEvent.setup();
   const writeText = vi.fn(() => Promise.resolve());

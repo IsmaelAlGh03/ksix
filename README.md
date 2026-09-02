@@ -2,7 +2,7 @@
 
 Video calls for up to six people. Open a link, land in a green room, join. Built this to write the WebRTC by hand instead of calling someone's SDK, so there's no media server, no accounts, no database. Rooms live in memory and die with the process.
 
-**Demo:** not deployed yet.
+[![CI](https://github.com/IsmaelAlGh03/mesh-room/actions/workflows/ci.yml/badge.svg)](https://github.com/IsmaelAlGh03/mesh-room/actions/workflows/ci.yml)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)

@@ -21,7 +21,6 @@ export function describeMediaError(
 ): string {
   const name = error instanceof DOMException ? error.name : '';
 
-  // Off a secure origin there is no navigator.mediaDevices at all, so no error name is meaningful.
   if (!secureContext) {
     return 'The camera and microphone need a secure connection. Open this page over HTTPS.';
   }
@@ -48,7 +47,6 @@ export async function openMedia(
   } catch (error) {
     const message = describeMediaError(error, secureContext);
 
-    // Off a secure origin the second request cannot fare better, so do not ask twice.
     if (!secureContext) return { stream: null, mode: 'view-only', error: message };
 
     try {

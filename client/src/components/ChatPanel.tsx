@@ -65,7 +65,6 @@ export function ChatPanel({
 
   function pick(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
-    // Cleared so choosing the same file twice still fires a change.
     event.target.value = '';
     if (file !== undefined) onAttach(file);
   }

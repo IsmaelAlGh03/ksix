@@ -185,14 +185,10 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     }));
   }
 
-  // Two people can press Share inside one presence round trip; the one the room will not show
-  // has to stop, or it keeps capturing and sending a screen nobody can see.
   function yieldStage(): void {
     if (lostContest(claimants(), socket?.id ?? '', screenStream?.id ?? null)) stopShare();
   }
 
-  // A track can arrive before the presence message naming it, so every inbound stream is kept and
-  // re-sorted whenever the claim changes. Nothing is guessed from track order.
   function sortStreams(entry: PeerEntry): void {
     const claimed = entry.inboundStreams.find((stream) => stream.id === entry.sharing) ?? null;
 
@@ -363,7 +359,6 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     try {
       display = await getDisplay();
     } catch {
-      // Dismissing the picker is a decision, not a fault, and rejects the same way as a refusal.
       return;
     }
 
@@ -476,8 +471,6 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     entry.recoveryTimer = null;
   }
 
-  // Chrome fires no further connectionstatechange once a link is failed, so every rung after the
-  // first has to be reached on a timer rather than an event.
   function armRecovery(entry: PeerEntry, polite: boolean, promote: boolean): void {
     if (entry.recoveryTimer !== null) return;
 
@@ -527,7 +520,6 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       return;
     }
 
-    // Only a disconnect gets a grace timer; a polite peer's wait is passive and must not re-arm.
     if (entry.connectionState === 'disconnected') armRecovery(entry, polite, true);
   }
 
@@ -635,7 +627,6 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       publish();
     });
 
-    // PreJoin connects this socket to watch the count, so 'connect' may never fire again.
     if (socket.connected) announce();
     else socket.connect();
   }
@@ -648,7 +639,6 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     stopPolling();
     for (const socketId of [...peers.keys()]) removePeer(socketId);
 
-    // Stopped explicitly, or the browser goes on saying you are sharing after the call has ended.
     screenStream?.getTracks().forEach((track) => track.stop());
     screenStream = null;
 
