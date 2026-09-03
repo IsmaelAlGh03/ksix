@@ -47,7 +47,7 @@ export function LobbyPage(): JSX.Element {
             <button
               type="button"
               onClick={() => navigate(`/room/${createRoomId()}`)}
-              className="bg-ink px-6 py-3 text-sm font-bold text-substrate"
+              className="bg-ink px-6 py-3 text-sm font-bold text-substrate transition-colors duration-150 hover:bg-ink/90"
             >
               Start a room
             </button>
@@ -72,7 +72,7 @@ export function LobbyPage(): JSX.Element {
               </div>
               <button
                 type="submit"
-                className="border-[1.5px] border-ink px-6 py-3 text-sm font-bold"
+                className="border-[1.5px] border-ink px-6 py-3 text-sm font-bold transition-colors duration-150 hover:bg-ink/10"
               >
                 Join
               </button>
