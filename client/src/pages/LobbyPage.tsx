@@ -31,11 +31,15 @@ export function LobbyPage(): JSX.Element {
           </p>
 
           <h1
-            aria-label="mesh-room"
-            className="mt-5 font-display text-[clamp(3.25rem,11vw,5.5rem)] leading-[0.94] font-extrabold tracking-tight"
+            aria-label="ksix"
+            className="mt-5 font-display text-[clamp(4.5rem,17vw,9rem)] leading-[0.9] font-extrabold tracking-tight"
           >
-            <span className="block">mesh</span>
-            <span className="block">room</span>
+            <span aria-hidden="true">
+              K
+              <span className="relative top-[0.08em] font-mono text-[0.4em] font-normal tracking-normal">
+                6
+              </span>
+            </span>
           </h1>
 
           <p className="mt-6 max-w-[46ch] text-[15px] leading-relaxed">

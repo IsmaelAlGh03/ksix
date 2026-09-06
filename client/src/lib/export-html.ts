@@ -57,7 +57,7 @@ function formatTime(at: number): string {
 
 export function transcriptFilename(roomId: string, takenAt: number): string {
   const slug = roomId.toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const parts = ['mesh-room', slug, dateStamp(takenAt), clockStamp(takenAt)];
+  const parts = ['ksix', slug, dateStamp(takenAt), clockStamp(takenAt)];
   return `${parts.filter((part) => part !== '').join('-')}.html`;
 }
 
@@ -137,14 +137,14 @@ export function renderTranscript(transcript: Transcript): string {
     '<head>',
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    `<title>mesh-room — ${room}</title>`,
+    `<title>ksix — ${room}</title>`,
     `<style>${styles()}</style>`,
     '</head>',
     '<body>',
     '<div class="sheet">',
     '<header>',
     '<p class="eyebrow">Chat transcript</p>',
-    '<h1 translate="no">mesh-room</h1>',
+    '<h1 translate="no">ksix</h1>',
     `<p class="meta">${room} · ${taken}</p>`,
     '</header>',
     `<main>${transcript.entries.map(renderEntry).join('')}</main>`,

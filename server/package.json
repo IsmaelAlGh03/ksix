@@ -1,8 +1,8 @@
 {
-  "name": "mesh-room-server",
+  "name": "ksix-server",
   "version": "0.1.0",
   "private": true,
-  "description": "Signaling server for mesh-room",
+  "description": "Signaling server for ksix",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {

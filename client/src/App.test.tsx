@@ -24,7 +24,7 @@ describe('App', () => {
   it('shows the lobby at the root', () => {
     renderAt('/');
 
-    expect(screen.getByRole('heading', { name: 'mesh-room' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ksix' })).toBeInTheDocument();
   });
 
   it('shows the room named in the path', () => {
@@ -36,6 +36,6 @@ describe('App', () => {
   it('sends an unknown path back to the lobby', () => {
     renderAt('/nowhere');
 
-    expect(screen.getByRole('heading', { name: 'mesh-room' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ksix' })).toBeInTheDocument();
   });
 });

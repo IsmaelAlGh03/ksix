@@ -45,6 +45,6 @@ export async function startServer(port: number = env.port): Promise<RunningServe
 
 if (require.main === module) {
   startServer().then(({ port }) => {
-    console.log(`mesh-room signaling server listening on :${port}`);
+    console.log(`ksix signaling server listening on :${port}`);
   });
 }

@@ -1,5 +1,5 @@
 {
-  "name": "mesh-room",
+  "name": "ksix",
   "version": "0.1.0",
   "private": true,
   "description": "Peer-to-peer video rooms for up to 6 people, built on hand-written WebRTC",

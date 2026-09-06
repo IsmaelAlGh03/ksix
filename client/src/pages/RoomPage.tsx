@@ -80,7 +80,7 @@ export function RoomPage(): JSX.Element {
       <header className="flex flex-col gap-1 border-b-[1.5px] border-ink pb-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
         <div className="flex min-w-0 items-center gap-x-2">
           <h1 className="min-w-0 truncate font-display text-xl font-extrabold tracking-tight">
-            mesh-room <span className="font-sans font-normal opacity-55">/ </span>
+            ksix <span className="font-sans font-normal opacity-55">/ </span>
             <span translate="no" className="font-sans font-normal opacity-55">
               {roomId}
             </span>

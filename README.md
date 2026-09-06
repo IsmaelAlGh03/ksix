@@ -1,8 +1,8 @@
-# mesh-room
+# ksix
 
 Video calls for up to six people. Open a link, land in a green room, join. Built this to write the WebRTC by hand instead of calling someone's SDK, so there's no media server, no accounts, no database. Rooms live in memory and die with the process.
 
-[![CI](https://github.com/IsmaelAlGh03/mesh-room/actions/workflows/ci.yml/badge.svg)](https://github.com/IsmaelAlGh03/mesh-room/actions/workflows/ci.yml)
+[![CI](https://github.com/IsmaelAlGh03/ksix/actions/workflows/ci.yml/badge.svg)](https://github.com/IsmaelAlGh03/ksix/actions/workflows/ci.yml)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
@@ -13,7 +13,7 @@ Video calls for up to six people. Open a link, land in a green room, join. Built
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
 
-![mesh-room demo](assets/mesh-room-demo.gif)
+![ksix demo](assets/ksix-demo.gif)
 
 ## What it does
 
@@ -61,36 +61,28 @@ A few things I cared about beyond "it works":
 
 **Tests:** Vitest both sides, Playwright for end-to-end
 
-**Deployed:** Vercel + Render
+**Live:** [ksix.dev](https://ksix.dev). Client on Vercel, signaling server on Render.
+
+The server sleeps after 15 minutes idle. The first join then waits about a minute while it wakes, and the green room says so while you wait.
 
 ## Running it locally
 
 You need Node 24.
 
 ```bash
-git clone https://github.com/IsmaelAlGh03/mesh-room.git
-cd mesh-room
+git clone https://github.com/IsmaelAlGh03/ksix.git
+cd ksix
 npm run install:all
-```
-
-Copy both env examples:
-
-```bash
-cp server/.env.example server/.env
-cp client/.env.example client/.env
-```
-
-The defaults work as-is. `client/.env` also has three commented `VITE_TURN_*` variables. Fill them in and calls get a relay to fall back on. Without them it's STUN-only, which is fine on most networks and fails on locked-down ones.
-
-```bash
 npm run dev
 ```
 
-Server on `localhost:4000`, client on `localhost:5173`. Open the client in two tabs to call yourself.
+Server on `localhost:4000`, client on `localhost:5173`. Open the client in two tabs to call yourself. Nothing to configure. The defaults live in the code, so there are no files to copy first.
+
+Both sides read environment variables when you want to change one. `server/.env.example` and `client/.env.example` list them. The three commented `VITE_TURN_*` variables are the ones worth knowing about. Fill them in and calls get a relay to fall back on. Leave them and it's STUN-only, which is fine on most networks and fails on locked-down ones.
 
 ## Tests
 
 ```bash
-npm test          # 39 server + 241 client, Vitest
-npm run test:e2e  # 5 specs, Playwright
+npm test          # 39 server + 251 client, Vitest
+npm run test:e2e  # 6 specs, Playwright
 ```

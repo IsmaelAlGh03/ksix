@@ -19,7 +19,7 @@ describe('LobbyPage', () => {
   it('names the product', () => {
     renderLobby();
 
-    expect(screen.getByRole('heading', { name: /mesh.?room/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ksix' })).toBeInTheDocument();
   });
 
   it('opens a new room when you start one', async () => {
@@ -37,7 +37,7 @@ describe('LobbyPage', () => {
 
     await user.type(
       screen.getByLabelText(/room link/i),
-      'https://mesh-room.app/room/quiet-harbor-41',
+      'https://ksix.dev/room/quiet-harbor-41',
     );
     await user.click(screen.getByRole('button', { name: 'Join' }));
 

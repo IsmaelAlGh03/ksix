@@ -632,7 +632,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
   }
 
   function reportSignalFailure(error: unknown): void {
-    console.error('mesh-room: negotiation failed', error);
+    console.error('ksix: negotiation failed', error);
   }
 
   function leave(): void {

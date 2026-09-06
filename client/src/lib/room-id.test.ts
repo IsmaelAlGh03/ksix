@@ -19,11 +19,11 @@ describe('parseRoomId', () => {
   });
 
   it('pulls the room out of a full link', () => {
-    expect(parseRoomId('https://mesh-room.app/room/quiet-harbor-41')).toBe('quiet-harbor-41');
+    expect(parseRoomId('https://ksix.dev/room/quiet-harbor-41')).toBe('quiet-harbor-41');
   });
 
   it('ignores a trailing slash and query string', () => {
-    expect(parseRoomId('https://mesh-room.app/room/quiet-harbor-41/?x=1')).toBe('quiet-harbor-41');
+    expect(parseRoomId('https://ksix.dev/room/quiet-harbor-41/?x=1')).toBe('quiet-harbor-41');
   });
 
   it('trims and lowercases what was pasted', () => {

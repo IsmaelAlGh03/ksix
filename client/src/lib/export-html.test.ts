@@ -147,16 +147,16 @@ describe('renderTranscript', () => {
 describe('transcriptFilename', () => {
   it('dates and times the file so two copies do not collide', () => {
     expect(transcriptFilename('quiet-harbour', AT)).toBe(
-      'mesh-room-quiet-harbour-2026-08-15-1402.html',
+      'ksix-quiet-harbour-2026-08-15-1402.html',
     );
   });
 
   it('strips anything a room id has no business putting in a filename', () => {
-    expect(transcriptFilename('../etc/passwd', AT)).toBe('mesh-room-etcpasswd-2026-08-15-1402.html');
-    expect(transcriptFilename('two words', AT)).toBe('mesh-room-twowords-2026-08-15-1402.html');
+    expect(transcriptFilename('../etc/passwd', AT)).toBe('ksix-etcpasswd-2026-08-15-1402.html');
+    expect(transcriptFilename('two words', AT)).toBe('ksix-twowords-2026-08-15-1402.html');
   });
 
   it('falls back to a name when the room id survives as nothing', () => {
-    expect(transcriptFilename('///', AT)).toBe('mesh-room-2026-08-15-1402.html');
+    expect(transcriptFilename('///', AT)).toBe('ksix-2026-08-15-1402.html');
   });
 });
