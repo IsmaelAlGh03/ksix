@@ -25,3 +25,27 @@ export const env = {
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';
+
+const PREVIEW_SCOPE = str('VERCEL_PREVIEW_SCOPE', '');
+
+function previewPattern(scope: string): RegExp | null {
+  if (!/^[a-z0-9-]+$/.test(scope)) return null;
+  return new RegExp('^ksix-[a-z0-9-]+-' + scope + '[.]vercel[.]app$');
+}
+
+const previewHost = previewPattern(PREVIEW_SCOPE);
+
+export function isAllowedOrigin(origin: string | undefined): boolean {
+  if (origin === undefined) return false;
+  if (env.clientOrigins.includes(origin)) return true;
+  if (previewHost === null) return false;
+
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  return url.protocol === 'https:' && url.port === '' && previewHost.test(url.hostname);
+}

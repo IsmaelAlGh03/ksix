@@ -1,7 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import { Server as IOServer } from 'socket.io';
 import { createApp } from './app';
-import { env } from './env';
+import { env, isAllowedOrigin } from './env';
 import { registerSignaling } from './socket';
 
 export interface RunningServer {
@@ -14,7 +14,7 @@ export interface RunningServer {
 export async function startServer(port: number = env.port): Promise<RunningServer> {
   const http = createServer(createApp());
   const io = new IOServer(http, {
-    cors: { origin: env.clientOrigins },
+    cors: { origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) },
   });
 
   registerSignaling(io);
