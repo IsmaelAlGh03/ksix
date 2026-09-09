@@ -83,6 +83,6 @@ Both sides read environment variables when you want to change one. `server/.env.
 ## Tests
 
 ```bash
-npm test          # 39 server + 251 client, Vitest
-npm run test:e2e  # 6 specs, Playwright
+npm test          # 51 server + 283 client, Vitest
+npm run test:e2e  # 10 specs, Playwright
 ```
