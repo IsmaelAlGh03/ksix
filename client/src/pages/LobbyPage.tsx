@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MeshMark } from '../components/MeshMark';
+import { LOBBY_TITLE } from '../lib/page-title';
 import { createRoomId, parseRoomId } from '../lib/room-id';
+import { useDocumentTitle } from '../lib/use-document-title';
 
 const BAD_LINK = 'That is not a room link. Paste the whole link, or the room name on its own.';
 
 export function LobbyPage(): JSX.Element {
+  useDocumentTitle(LOBBY_TITLE);
   const navigate = useNavigate();
   const [link, setLink] = useState('');
   const [error, setError] = useState<string | null>(null);

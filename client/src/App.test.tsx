@@ -33,6 +33,18 @@ describe('App', () => {
     expect(screen.getByText('quiet-harbor-41')).toBeInTheDocument();
   });
 
+  it('titles the lobby tab with the product', () => {
+    renderAt('/');
+
+    expect(document.title).toBe('ksix · peer-to-peer video rooms');
+  });
+
+  it('titles a room tab with its room, so six open tabs stay apart', () => {
+    renderAt('/room/quiet-harbor-41');
+
+    expect(document.title).toBe('quiet-harbor-41 · ksix');
+  });
+
   it('sends an unknown path back to the lobby', () => {
     renderAt('/nowhere');
 

@@ -5,7 +5,9 @@ import { ControlBar } from '../components/ControlBar';
 import { CopyLink } from '../components/CopyLink';
 import { PreJoin } from '../components/PreJoin';
 import { VideoGrid } from '../components/VideoGrid';
+import { roomTitle } from '../lib/page-title';
 import { saveTranscript } from '../lib/save-transcript';
+import { useDocumentTitle } from '../lib/use-document-title';
 import { Stage } from '../components/Stage';
 import { buildLinks, LOCAL_ID } from '../webrtc/mesh-links';
 import { stageHolder } from '../webrtc/stage';
@@ -25,6 +27,7 @@ export function RoomPage(): JSX.Element {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const room = useWebRTC(roomId ?? '');
+  useDocumentTitle(roomTitle(roomId ?? ''));
   const { status, localStream, participants, mediaError } = room;
   const occupancy = useRoomCount(roomId ?? '', status === 'idle');
   const [linksView, setLinksView] = useState(false);
