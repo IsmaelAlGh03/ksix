@@ -12,11 +12,15 @@ const envConfig: IceConfig = {
   turnCredential: import.meta.env.VITE_TURN_CREDENTIAL,
 };
 
+function isRelayUrl(url: string): boolean {
+  return url.startsWith('turn:') || url.startsWith('turns:');
+}
+
 function urlList(raw: string | undefined): string[] {
   return (raw ?? '')
     .split(',')
     .map((url) => url.trim())
-    .filter(Boolean);
+    .filter(isRelayUrl);
 }
 
 function turnServer(config: IceConfig): RTCIceServer | null {

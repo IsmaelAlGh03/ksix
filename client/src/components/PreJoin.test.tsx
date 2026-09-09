@@ -36,6 +36,7 @@ function setupMedia(getUserMedia: () => Promise<MediaStream>): void {
 }
 
 beforeEach(() => {
+  Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
   setupMedia(async () => fakeStream());
   socket.connected = true;
 });
@@ -80,6 +81,74 @@ describe('PreJoin', () => {
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText(/your name/i), 'Ada');
     expect(screen.getByRole('button', { name: /join/i })).toBeEnabled();
+  });
+
+  it('names what you are about to join without, when nothing was granted', async () => {
+    setupMedia(async () => {
+      throw new DOMException('denied', 'NotAllowedError');
+    });
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Join alpha without camera or mic' })).toBeInTheDocument();
+  });
+
+  it('names the missing camera alone when the microphone was granted', async () => {
+    let call = 0;
+    setupMedia(async () => {
+      if (call++ === 0) throw new DOMException('busy', 'NotReadableError');
+      return fakeStream();
+    });
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Join alpha without a camera' })).toBeInTheDocument();
+  });
+
+  it('keeps the plain name when both devices are granted', async () => {
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Join alpha' })).toBeInTheDocument();
+  });
+
+  it('hands the room the media mode and the reason, not just the stream', async () => {
+    const onJoin = vi.fn();
+    setupMedia(async () => {
+      throw new DOMException('denied', 'NotAllowedError');
+    });
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={onJoin} />);
+
+    await screen.findByRole('alert');
+    await userEvent.type(screen.getByLabelText(/your name/i), 'Ada');
+    await userEvent.click(screen.getByRole('button', { name: /join/i }));
+
+    expect(onJoin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stream: undefined,
+        mode: 'view-only',
+        error: expect.stringContaining('blocking the camera'),
+      }),
+    );
+  });
+
+  it('takes another run at the devices when you press Try again', async () => {
+    let call = 0;
+    setupMedia(async () => {
+      if (call++ === 0) throw new DOMException('denied', 'NotAllowedError');
+      return fakeStream();
+    });
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    await screen.findByRole('alert');
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Join alpha' })).toBeInTheDocument();
+  });
+
+  it('offers no way to retry while the devices are already granted', async () => {
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    await screen.findByRole('button', { name: /join/i });
+    expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
   });
 
   it('offers the cameras it found once permission is granted', async () => {

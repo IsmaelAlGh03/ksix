@@ -64,6 +64,19 @@ describe('iceServers', () => {
   it('ignores urls that are only separators', () => {
     expect(iceServers({ ...complete, turnUrls: ' , ' })).toHaveLength(1);
   });
+
+  it('drops a stun url pasted into the TURN variable, keeping the relays beside it', () => {
+    const servers = iceServers({
+      ...complete,
+      turnUrls: 'stun:relay.example.com:80, turn:relay.example.com:80',
+    });
+
+    expect(turnEntry(servers)?.urls).toEqual(['turn:relay.example.com:80']);
+  });
+
+  it('adds no TURN server at all when every url is stun', () => {
+    expect(iceServers({ ...complete, turnUrls: 'stun:relay.example.com:80' })).toHaveLength(1);
+  });
 });
 
 describe('hasTurn', () => {
@@ -80,6 +93,11 @@ describe('hasTurn', () => {
   it('is false for no config at all, and for urls that are only separators', () => {
     expect(hasTurn({})).toBe(false);
     expect(hasTurn({ ...complete, turnUrls: ' , ' })).toBe(false);
+  });
+
+  it('cannot be told a relay exists by a stun-only list', () => {
+    expect(hasTurn({ ...complete, turnUrls: 'stun:relay.example.com:80' })).toBe(false);
+    expect(hasTurn({ ...complete, turnUrls: 'stun:a:80,stun:b:80' })).toBe(false);
   });
 
   it('agrees with iceServers about whether a relay exists', () => {

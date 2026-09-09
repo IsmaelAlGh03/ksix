@@ -46,6 +46,8 @@ export interface MeshSessionOptions {
 export interface JoinDetails {
   displayName?: string;
   stream?: MediaStream;
+  mode?: MediaMode;
+  error?: string | null;
   micOn?: boolean;
   cameraOn?: boolean;
 }
@@ -586,8 +588,8 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
 
     if (details.stream !== undefined) {
       localStream = details.stream;
-      mediaMode = 'full';
-      mediaError = null;
+      mediaMode = details.mode ?? 'full';
+      mediaError = details.error ?? null;
     } else {
       const opened = await openMedia((constraints) => getMedia(constraints));
       localStream = opened.stream;

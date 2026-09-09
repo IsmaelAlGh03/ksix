@@ -3,7 +3,7 @@ import { DeviceSelect } from './DeviceSelect';
 import { DeviceIcon } from './icons';
 import { ParticipantTile } from './ParticipantTile';
 import { RoomCount } from './RoomCount';
-import { openMedia } from '../webrtc/media';
+import { openMedia, type MediaMode } from '../webrtc/media';
 import { useServerStatus } from '../webrtc/useServerStatus';
 import type { JoinDetails } from '../webrtc/session';
 
@@ -17,6 +17,12 @@ interface PreJoinProps {
 const TOGGLE_BASE =
   'flex items-center gap-2 border-[1.5px] border-ink px-4 py-2.5 text-sm font-medium transition-colors duration-150';
 
+const MISSING: Record<MediaMode, string> = {
+  full: '',
+  'audio-only': ' without a camera',
+  'view-only': ' without camera or mic',
+};
+
 function toggleClass(on: boolean): string {
   return on
     ? `${TOGGLE_BASE} bg-transparent hover:bg-ink/10`
@@ -25,6 +31,7 @@ function toggleClass(on: boolean): string {
 
 export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.Element {
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [mode, setMode] = useState<MediaMode>('full');
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
@@ -34,12 +41,15 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   const held = useRef<MediaStream | null>(null);
   const handedOver = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    setBusy(true);
 
     async function acquire(): Promise<void> {
       const opened = await openMedia(
@@ -58,6 +68,7 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
       held.current?.getTracks().forEach((track) => track.stop());
       held.current = opened.stream;
       setStream(opened.stream);
+      setMode(opened.mode);
       setMediaError(opened.error);
 
       const devices: MediaDevices | undefined = navigator.mediaDevices;
@@ -67,13 +78,14 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
       setCameras(found.filter((device) => device.kind === 'videoinput'));
       setMicrophones(found.filter((device) => device.kind === 'audioinput'));
       setReady(true);
+      setBusy(false);
     }
 
     void acquire();
     return () => {
       cancelled = true;
     };
-  }, [cameraId, microphoneId]);
+  }, [cameraId, microphoneId, attempt]);
 
   useEffect(
     () => () => {
@@ -103,9 +115,20 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
           cameraOn={cameraOn}
         />
         {mediaError !== null && (
-          <p role="alert" className="mt-3 max-w-[40ch] font-mono text-[11px] leading-relaxed">
-            {mediaError}
-          </p>
+          <div
+            role="alert"
+            className="mt-3 flex max-w-[46ch] flex-col items-start gap-3 border-[1.5px] border-alert p-3.5"
+          >
+            <p className="text-[13px] leading-relaxed text-alert">{mediaError}</p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setAttempt((n) => n + 1)}
+              className="border-[1.5px] border-alert px-4 py-2 text-sm font-medium text-alert transition-colors duration-150 hover:bg-alert/10 disabled:opacity-40"
+            >
+              Try again
+            </button>
+          </div>
         )}
       </div>
 
@@ -175,19 +198,21 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
 
         <button
           type="button"
-          disabled={!ready || !named || full || !server.connected}
+          disabled={!ready || busy || !named || full || !server.connected}
           onClick={() => {
             handedOver.current = stream !== null;
             onJoin({
               displayName: displayName.trim(),
               stream: stream ?? undefined,
+              mode,
+              error: mediaError,
               micOn,
               cameraOn,
             });
           }}
           className="bg-ink px-6 py-3.5 text-sm font-bold text-substrate transition-colors duration-150 hover:bg-ink/90 disabled:bg-transparent disabled:text-ink disabled:opacity-35 disabled:outline disabled:outline-[1.5px] disabled:outline-ink"
         >
-          {full ? 'Join the room' : `Join ${roomId}`}
+          {full ? 'Join the room' : `Join ${roomId}${MISSING[mode]}`}
         </button>
       </div>
     </div>

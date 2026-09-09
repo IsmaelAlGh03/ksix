@@ -159,6 +159,41 @@ describe('joining with media already resolved', () => {
     expect(socket.emit).toHaveBeenCalledWith('join-room', { roomId: 'alpha', displayName: 'Ada' });
   });
 
+  it('keeps the mode and the reason the green room resolved', async () => {
+    const { stream } = trackedStream();
+    const session = createMeshSession({
+      roomId: 'alpha',
+      getSocket: () => createFakeSocket() as unknown as Socket,
+      createConnection: () => createStubConnection() as unknown as RTCPeerConnection,
+    });
+
+    await session.join({
+      displayName: 'Ada',
+      stream,
+      mode: 'audio-only',
+      error: 'Another app is using your camera. Close it, then try again.',
+    });
+
+    expect(session.getState().mediaMode).toBe('audio-only');
+    expect(session.getState().mediaError).toBe(
+      'Another app is using your camera. Close it, then try again.',
+    );
+  });
+
+  it('treats a bare stream as full media, as a direct join has no green room to ask', async () => {
+    const { stream } = trackedStream();
+    const session = createMeshSession({
+      roomId: 'alpha',
+      getSocket: () => createFakeSocket() as unknown as Socket,
+      createConnection: () => createStubConnection() as unknown as RTCPeerConnection,
+    });
+
+    await session.join({ displayName: 'Ada', stream });
+
+    expect(session.getState().mediaMode).toBe('full');
+    expect(session.getState().mediaError).toBeNull();
+  });
+
   it('still falls back to getMedia when no stream is supplied', async () => {
     const getMedia = vi.fn(async (_constraints: MediaStreamConstraints) => emptyStream);
     const session = createMeshSession({
