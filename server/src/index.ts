@@ -4,6 +4,8 @@ import { createApp } from './app';
 import { env, isAllowedOrigin } from './env';
 import { registerSignaling } from './socket';
 
+const MAX_SIGNAL_BYTES = 256 * 1024;
+
 export interface RunningServer {
   http: HttpServer;
   io: IOServer;
@@ -15,6 +17,8 @@ export async function startServer(port: number = env.port): Promise<RunningServe
   const http = createServer(createApp());
   const io = new IOServer(http, {
     cors: { origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) },
+    serveClient: false,
+    maxHttpBufferSize: MAX_SIGNAL_BYTES,
   });
 
   registerSignaling(io);
@@ -44,7 +48,12 @@ export async function startServer(port: number = env.port): Promise<RunningServe
 }
 
 if (require.main === module) {
-  startServer().then(({ port }) => {
-    console.log(`ksix signaling server listening on :${port}`);
-  });
+  startServer()
+    .then(({ port }) => {
+      console.log(`ksix signaling server listening on :${port}`);
+    })
+    .catch((error: unknown) => {
+      console.error('ksix: server failed to start', error);
+      process.exitCode = 1;
+    });
 }

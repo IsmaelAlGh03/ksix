@@ -6,6 +6,7 @@ import { CopyLink } from '../components/CopyLink';
 import { PreJoin } from '../components/PreJoin';
 import { VideoGrid } from '../components/VideoGrid';
 import { roomTitle } from '../lib/page-title';
+import { parseRoomId } from '../lib/room-id';
 import { saveTranscript } from '../lib/save-transcript';
 import { useDocumentTitle } from '../lib/use-document-title';
 import { Stage } from '../components/Stage';
@@ -24,12 +25,13 @@ const STATUS_LABEL: Record<SessionStatus, string> = {
 };
 
 export function RoomPage(): JSX.Element {
-  const { roomId } = useParams<{ roomId: string }>();
+  const { roomId: param } = useParams<{ roomId: string }>();
+  const roomId = parseRoomId(param ?? '') ?? '';
   const navigate = useNavigate();
-  const room = useWebRTC(roomId ?? '');
-  useDocumentTitle(roomTitle(roomId ?? ''));
+  const room = useWebRTC(roomId);
+  useDocumentTitle(roomTitle(roomId));
   const { status, localStream, participants, mediaError } = room;
-  const occupancy = useRoomCount(roomId ?? '', status === 'idle');
+  const occupancy = useRoomCount(roomId, status === 'idle');
   const [linksView, setLinksView] = useState(false);
   const area = useRef<HTMLDivElement>(null);
   const expanded = useRef(0);
@@ -107,7 +109,7 @@ export function RoomPage(): JSX.Element {
 
       {status === 'idle' && (
         <PreJoin
-          roomId={roomId ?? ''}
+          roomId={roomId}
           count={occupancy.count}
           capacity={occupancy.capacity}
           onJoin={room.join}
@@ -178,7 +180,7 @@ export function RoomPage(): JSX.Element {
             onToggleCamera={room.toggleCamera}
             onToggleLinks={() => setLinksView((open) => !open)}
             onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
-            onExport={() => saveTranscript(room.messages, roomId ?? '')}
+            onExport={() => saveTranscript(room.messages, roomId)}
             onLeave={room.leave}
           />
           <ChatPanel

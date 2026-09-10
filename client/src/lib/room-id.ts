@@ -8,14 +8,29 @@ const NOUNS: [string, ...string[]] = [
   'thicket', 'current', 'orchard', 'bridge', 'shoreline', 'station', 'valley', 'kiln',
 ];
 
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
+const SUFFIX_LENGTH = 8;
+
 const ROOM_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_ROOM_ID_LENGTH = 64;
+
+function randomBytes(count: number): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(count));
+}
 
 function pick(words: [string, ...string[]]): string {
-  return words[Math.floor(Math.random() * words.length)] ?? words[0];
+  const [byte] = randomBytes(1);
+  return words[(byte ?? 0) % words.length] ?? words[0];
+}
+
+function suffix(): string {
+  return [...randomBytes(SUFFIX_LENGTH)]
+    .map((byte) => ALPHABET[byte % ALPHABET.length])
+    .join('');
 }
 
 export function createRoomId(): string {
-  return `${pick(ADJECTIVES)}-${pick(NOUNS)}-${Math.floor(Math.random() * 90) + 10}`;
+  return `${pick(ADJECTIVES)}-${pick(NOUNS)}-${suffix()}`;
 }
 
 export function parseRoomId(input: string): string | null {
@@ -24,5 +39,6 @@ export function parseRoomId(input: string): string | null {
 
   const candidate = trimmed.match(/\/room\/([^/?#]+)/)?.[1] ?? trimmed;
 
+  if (candidate.length > MAX_ROOM_ID_LENGTH) return null;
   return ROOM_ID_PATTERN.test(candidate) ? candidate : null;
 }

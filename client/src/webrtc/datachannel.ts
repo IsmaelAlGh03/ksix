@@ -1,4 +1,5 @@
 import type { MeshMessage } from '../types';
+import { parseMeshMessage } from './validate';
 
 export interface ChannelLinkOptions {
   connection: RTCPeerConnection;
@@ -16,31 +17,15 @@ export interface ChannelLink {
 
 const LABEL = 'mesh';
 const HIGH_WATER = 1024 * 1024;
-const TYPES = new Set<MeshMessage['type']>([
-  'chat',
-  'presence',
-  'stats',
-  'file-meta',
-  'file-chunk',
-  'file-end',
-]);
 
 function parse(data: unknown): MeshMessage | null {
   if (typeof data !== 'string') return null;
 
-  let value: unknown;
   try {
-    value = JSON.parse(data);
+    return parseMeshMessage(JSON.parse(data));
   } catch {
     return null;
   }
-
-  if (typeof value !== 'object' || value === null) return null;
-
-  const { type } = value as { type?: unknown };
-  return typeof type === 'string' && TYPES.has(type as MeshMessage['type'])
-    ? (value as MeshMessage)
-    : null;
 }
 
 export function createChannelLink(options: ChannelLinkOptions): ChannelLink {

@@ -24,11 +24,22 @@ export interface RoomStore {
   isFull(roomId: string): boolean;
   size(roomId: string): number;
   roomCount(): number;
+  roomOf(socketId: string): string | undefined;
 }
 
+const UNSAFE_CHARS =
+  /[\u0000-\u001f\u007f-\u009f\u0300-\u036f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u206f\ufeff]/gu;
+
 function normalizeDisplayName(displayName: string): string {
-  const trimmed = displayName.trim().slice(0, MAX_DISPLAY_NAME_LENGTH);
-  return trimmed === '' ? DEFAULT_DISPLAY_NAME : trimmed;
+  const cleaned = displayName
+    .normalize('NFC')
+    .replace(UNSAFE_CHARS, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .slice(0, MAX_DISPLAY_NAME_LENGTH)
+    .trim();
+
+  return cleaned === '' ? DEFAULT_DISPLAY_NAME : cleaned;
 }
 
 export function createRoomStore(): RoomStore {
@@ -91,5 +102,6 @@ export function createRoomStore(): RoomStore {
     isFull: (roomId) => (rooms.get(roomId)?.size ?? 0) >= MAX_ROOM_SIZE,
     size: (roomId) => rooms.get(roomId)?.size ?? 0,
     roomCount: () => rooms.size,
+    roomOf: (socketId) => socketRooms.get(socketId),
   };
 }

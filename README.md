@@ -4,15 +4,6 @@ Video calls for up to six people. Open a link, land in a green room, join. Built
 
 [![CI](https://github.com/IsmaelAlGh03/ksix/actions/workflows/ci.yml/badge.svg)](https://github.com/IsmaelAlGh03/ksix/actions/workflows/ci.yml)
 
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
-![WebRTC](https://img.shields.io/badge/WebRTC-333333?style=flat&logo=webrtc&logoColor=white)
-![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat&logo=socket.io&logoColor=white)
-![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
-
 ![ksix demo](assets/ksix-demo.gif)
 
 ## What it does
@@ -78,11 +69,11 @@ npm run dev
 
 Server on `localhost:4000`, client on `localhost:5173`. Open the client in two tabs to call yourself. Nothing to configure. The defaults live in the code, so there are no files to copy first.
 
-Both sides read environment variables when you want to change one. `server/.env.example` and `client/.env.example` list them. The three commented `VITE_TURN_*` variables are the ones worth knowing about. Fill them in and calls get a relay to fall back on. Leave them and it's STUN-only, which is fine on most networks and fails on locked-down ones.
+Both sides read environment variables when you want to change one. `server/.env.example` and `client/.env.example` list them. `TURN_URLS` and `TURN_SECRET` are the ones worth knowing about. Set them and the server hands each browser a relay credential that expires in an hour, over `GET /ice`. Leave them and it's STUN-only, which is fine on most networks and fails on locked-down ones. The secret stays on the server; nothing about the relay is ever built into the client bundle.
 
 ## Tests
 
 ```bash
-npm test          # 51 server + 283 client, Vitest
+npm test          # 66 server + 294 client, Vitest
 npm run test:e2e  # 10 specs, Playwright
 ```

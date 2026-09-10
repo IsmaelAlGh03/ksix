@@ -11,7 +11,8 @@ import {
   type Reassembler,
 } from './chunker';
 import { createChannelLink, type ChannelLink } from './datachannel';
-import { hasTurn, iceServers } from './ice';
+import { hasTurn, iceServers, loadIceServers } from './ice';
+import { parseSignalData } from './validate';
 import { openMedia, type MediaMode } from './media';
 import { createPeerLink, isPolite, type PeerLink } from './peers';
 import { GRACE_MS, nextAction, type RecoveryState } from './recovery';
@@ -31,7 +32,6 @@ import type {
   PeerStat,
   SessionState,
   SessionStatus,
-  SignalMessage,
 } from '../types';
 
 export interface MeshSessionOptions {
@@ -597,6 +597,8 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       mediaError = opened.error;
     }
 
+    await loadIceServers();
+
     if (details.micOn !== undefined) setEnabled('audio', details.micOn);
     if (details.cameraOn !== undefined) setEnabled('video', details.cameraOn);
     publish();
@@ -618,8 +620,11 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
 
     bind('peer-joined', (participant: Participant) => addPeer(participant, false));
 
-    bind('signal', ({ from, data }: SignalMessage) => {
-      peers.get(from)?.link.accept(data).catch(reportSignalFailure);
+    bind('signal', ({ from, data }: { from: unknown; data: unknown }) => {
+      if (typeof from !== 'string') return;
+      const signal = parseSignalData(data);
+      if (signal === null) return;
+      peers.get(from)?.link.accept(signal).catch(reportSignalFailure);
     });
 
     bind('peer-left', ({ socketId }: { socketId: string }) => removePeer(socketId));

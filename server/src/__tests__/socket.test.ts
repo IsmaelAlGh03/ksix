@@ -284,4 +284,66 @@ describe('watching a room without joining it', () => {
 
     await expect(quiet).resolves.toBeUndefined();
   });
+
+  it('tells the old room when a socket switches rooms', async () => {
+    const stayer = await connect();
+    await join(stayer, 'alpha', 'Ada');
+
+    const mover = await connect();
+    await join(mover, 'alpha', 'Grace');
+    await once(stayer, 'peer-joined');
+
+    const left = once<{ socketId: string }>(stayer, 'peer-left');
+    await join(mover, 'beta', 'Grace');
+
+    expect((await left).socketId).toBe(mover.id);
+  });
+
+  it('stops delivering traffic from the old room after a switch', async () => {
+    const mover = await connect();
+    await join(mover, 'alpha', 'Grace');
+    await join(mover, 'beta', 'Grace');
+
+    const quiet = silence(mover, 'peer-joined');
+    const joiner = await connect();
+    await join(joiner, 'alpha', 'Ada');
+
+    await expect(quiet).resolves.toBeUndefined();
+  });
+
+  it('refuses to relay a signal to a socket in another room', async () => {
+    const sender = await connect();
+    await join(sender, 'alpha', 'Ada');
+
+    const outsider = await connect();
+    await join(outsider, 'beta', 'Grace');
+
+    const quiet = silence(outsider, 'signal');
+    sender.emit('signal', { to: outsider.id, data: { candidate: {} } });
+
+    await expect(quiet).resolves.toBeUndefined();
+  });
+
+  it('refuses to fan a signal out across a room name', async () => {
+    const member = await connect();
+    await join(member, 'alpha', 'Ada');
+
+    const sender = await connect();
+    await join(sender, 'alpha', 'Grace');
+    await once(member, 'peer-joined');
+
+    const quiet = silence(member, 'signal');
+    sender.emit('signal', { to: 'alpha', data: { candidate: {} } });
+
+    await expect(quiet).resolves.toBeUndefined();
+  });
+
+  it('ignores a room id that is not in the expected shape', async () => {
+    const client = await connect();
+
+    const quiet = silence(client, 'existing-peers');
+    client.emit('join-room', { roomId: 'Not A Room/../x', displayName: 'Ada' });
+
+    await expect(quiet).resolves.toBeUndefined();
+  });
 });

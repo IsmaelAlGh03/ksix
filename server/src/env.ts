@@ -22,6 +22,9 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  turnUrls: str('TURN_URLS', ''),
+  turnSecret: str('TURN_SECRET', ''),
+  turnTtlSeconds: int('TURN_TTL_SECONDS', 3600),
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';
@@ -30,7 +33,7 @@ const PREVIEW_SCOPE = str('VERCEL_PREVIEW_SCOPE', '');
 
 function previewPattern(scope: string): RegExp | null {
   if (!/^[a-z0-9-]+$/.test(scope)) return null;
-  return new RegExp('^ksix-[a-z0-9-]+-' + scope + '[.]vercel[.]app$');
+  return new RegExp('^ksix-[a-z0-9]{6,16}-' + scope + '[.]vercel[.]app$');
 }
 
 const previewHost = previewPattern(PREVIEW_SCOPE);
