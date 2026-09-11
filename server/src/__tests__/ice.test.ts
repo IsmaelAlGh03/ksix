@@ -1,44 +1,54 @@
-import { createHmac } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
-import { mintTurnCredential, relayUrls } from '../ice';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { meteredUrl, parseMeteredResponse, resetIceCache } from '../ice';
 
-describe('relayUrls', () => {
-  it('keeps only turn and turns urls', () => {
-    expect(relayUrls('turn:a:80, turns:b:443, stun:c:19302')).toEqual(['turn:a:80', 'turns:b:443']);
+const relay = {
+  urls: 'turn:global.relay.metered.ca:443',
+  username: 'abc123',
+  credential: 'shh',
+};
+
+beforeEach(() => {
+  resetIceCache();
+});
+
+describe('meteredUrl', () => {
+  it('builds the credentials endpoint for the app', () => {
+    expect(meteredUrl('ksix', 'key')).toBe(
+      'https://ksix.metered.live/api/v1/turn/credentials?apiKey=key',
+    );
   });
 
-  it('returns nothing for a blank or stun-only list', () => {
-    expect(relayUrls('')).toEqual([]);
-    expect(relayUrls(' , ')).toEqual([]);
-    expect(relayUrls('stun:c:19302')).toEqual([]);
+  it('escapes an api key with url-unsafe characters', () => {
+    expect(meteredUrl('ksix', 'a/b+c')).toContain('apiKey=a%2Fb%2Bc');
   });
 });
 
-describe('mintTurnCredential', () => {
-  it('stamps the username with the expiry', () => {
-    const { username, expiresAt } = mintTurnCredential('shh', 3600, 1_700_000_000_000);
-
-    expect(expiresAt).toBe(1_700_000_000 + 3600);
-    expect(username).toBe(`${expiresAt}:ksix`);
+describe('parseMeteredResponse', () => {
+  it('keeps a credentialled relay from a bare array', () => {
+    expect(parseMeteredResponse([relay])).toEqual([
+      { urls: [relay.urls], username: relay.username, credential: relay.credential },
+    ]);
   });
 
-  it('signs the username with the shared secret', () => {
-    const { username, credential } = mintTurnCredential('shh', 3600, 1_700_000_000_000);
-
-    expect(credential).toBe(createHmac('sha1', 'shh').update(username).digest('base64'));
+  it('accepts the same entries wrapped in iceServers', () => {
+    expect(parseMeteredResponse({ iceServers: [relay] })).toHaveLength(1);
   });
 
-  it('produces a different credential for a different secret', () => {
-    const a = mintTurnCredential('one', 3600, 1_700_000_000_000);
-    const b = mintTurnCredential('two', 3600, 1_700_000_000_000);
+  it('drops the stun entries metered returns alongside the relays', () => {
+    const servers = parseMeteredResponse([{ urls: 'stun:stun.relay.metered.ca:80' }, relay]);
 
-    expect(a.credential).not.toBe(b.credential);
+    expect(servers).toHaveLength(1);
+    expect(servers[0]?.urls).toEqual([relay.urls]);
   });
 
-  it('moves the expiry forward as time passes', () => {
-    const early = mintTurnCredential('shh', 60, 1_700_000_000_000);
-    const later = mintTurnCredential('shh', 60, 1_700_000_600_000);
+  it('drops a relay that arrives without credentials', () => {
+    expect(parseMeteredResponse([{ urls: relay.urls }])).toEqual([]);
+    expect(parseMeteredResponse([{ ...relay, credential: '' }])).toEqual([]);
+  });
 
-    expect(later.expiresAt).toBeGreaterThan(early.expiresAt);
+  it('survives a malformed payload', () => {
+    expect(parseMeteredResponse(null)).toEqual([]);
+    expect(parseMeteredResponse('nope')).toEqual([]);
+    expect(parseMeteredResponse([null, 7, 'x'])).toEqual([]);
   });
 });

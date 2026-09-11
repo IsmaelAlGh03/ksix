@@ -22,9 +22,8 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
-  turnUrls: str('TURN_URLS', ''),
-  turnSecret: str('TURN_SECRET', ''),
-  turnTtlSeconds: int('TURN_TTL_SECONDS', 3600),
+  meteredAppName: str('METERED_APP_NAME', ''),
+  meteredApiKey: str('METERED_API_KEY', ''),
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';

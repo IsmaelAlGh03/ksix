@@ -14,7 +14,7 @@ services:
         value: production
       - key: CLIENT_ORIGIN
         sync: false
-      - key: TURN_URLS
+      - key: METERED_APP_NAME
         sync: false
-      - key: TURN_SECRET
+      - key: METERED_API_KEY
         sync: false

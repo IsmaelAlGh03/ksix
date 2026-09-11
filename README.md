@@ -69,11 +69,11 @@ npm run dev
 
 Server on `localhost:4000`, client on `localhost:5173`. Open the client in two tabs to call yourself. Nothing to configure. The defaults live in the code, so there are no files to copy first.
 
-Both sides read environment variables when you want to change one. `server/.env.example` and `client/.env.example` list them. `TURN_URLS` and `TURN_SECRET` are the ones worth knowing about. Set them and the server hands each browser a relay credential that expires in an hour, over `GET /ice`. Leave them and it's STUN-only, which is fine on most networks and fails on locked-down ones. The secret stays on the server; nothing about the relay is ever built into the client bundle.
+Both sides read environment variables when you want to change one. `server/.env.example` and `client/.env.example` list them. `METERED_APP_NAME` and `METERED_API_KEY` are the ones worth knowing about. Set them and the server fetches short-lived relay credentials and hands them to the browser over `GET /ice`. Leave them and it's STUN-only, which is fine on most networks and fails on locked-down ones. The secret stays on the server; nothing about the relay is ever built into the client bundle.
 
 ## Tests
 
 ```bash
-npm test          # 66 server + 294 client, Vitest
+npm test          # 67 server + 294 client, Vitest
 npm run test:e2e  # 10 specs, Playwright
 ```

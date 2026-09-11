@@ -1,7 +1,7 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
 import { isAllowedOrigin } from './env';
-import { iceConfig } from './ice';
+import { iceServers } from './ice';
 
 export function createApp(): Express {
   const app = express();
@@ -16,9 +16,10 @@ export function createApp(): Express {
   });
 
   app.get('/ice', (_req, res) => {
-    const { iceServers, expiresAt } = iceConfig();
-    res.set('Cache-Control', 'no-store');
-    res.json({ iceServers, expiresAt });
+    void iceServers().then((servers) => {
+      res.set('Cache-Control', 'no-store');
+      res.json({ iceServers: servers });
+    });
   });
 
   return app;
