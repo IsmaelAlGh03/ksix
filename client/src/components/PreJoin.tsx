@@ -99,6 +99,16 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
     stream?.getVideoTracks().forEach((track) => (track.enabled = cameraOn));
   }, [stream, micOn, cameraOn]);
 
+  function toggleMic(): void {
+    stream?.getAudioTracks().forEach((track) => (track.enabled = !micOn));
+    setMicOn(!micOn);
+  }
+
+  function toggleCamera(): void {
+    stream?.getVideoTracks().forEach((track) => (track.enabled = !cameraOn));
+    setCameraOn(!cameraOn);
+  }
+
   const server = useServerStatus();
   const named = displayName.trim() !== '';
   const full = count !== null && count >= capacity;
@@ -173,7 +183,7 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
           <button
             type="button"
             aria-pressed={micOn}
-            onClick={() => setMicOn((on) => !on)}
+            onClick={toggleMic}
             className={toggleClass(micOn)}
           >
             <DeviceIcon device="mic" on={micOn} />
@@ -182,7 +192,7 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
           <button
             type="button"
             aria-pressed={cameraOn}
-            onClick={() => setCameraOn((on) => !on)}
+            onClick={toggleCamera}
             className={toggleClass(cameraOn)}
           >
             <DeviceIcon device="camera" on={cameraOn} />

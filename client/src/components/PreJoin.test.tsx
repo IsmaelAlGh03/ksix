@@ -63,6 +63,17 @@ describe('PreJoin', () => {
     );
   });
 
+  it('brings the preview back when the camera is turned off and on again', async () => {
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    await screen.findByLabelText('Your camera');
+    await userEvent.click(screen.getByRole('button', { name: /camera on/i }));
+    expect(screen.queryByLabelText('Your camera')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: /camera off/i }));
+    expect(screen.getByLabelText('Your camera')).toBeInTheDocument();
+  });
+
   it('treats a whitespace-only name as no name at all', async () => {
     render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
 
