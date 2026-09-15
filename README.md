@@ -54,7 +54,7 @@ A few things I cared about beyond "it works":
 
 **Live:** [ksix.dev](https://ksix.dev). Client on Vercel, signaling server on Render.
 
-The server sleeps after 15 minutes idle. The first join then waits about a minute while it wakes, and the green room says so while you wait.
+Render's free plan sleeps the server after 15 minutes idle, so an external monitor pings `/health` every 10 minutes to keep it awake. If that ping ever lapses, the first join waits about a minute while the server wakes, and the green room says so while you wait.
 
 ## Running it locally
 
