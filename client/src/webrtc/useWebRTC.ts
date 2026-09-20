@@ -12,6 +12,8 @@ export interface RoomControls extends SessionState {
   stopShare: () => void;
   sendChat: (text: string) => void;
   sendAttachment: (file: File) => void;
+  setWriting: (active: boolean) => void;
+  toggleSounds: () => void;
 }
 
 export function useWebRTC(roomId: string): RoomControls {
@@ -38,5 +40,7 @@ export function useWebRTC(roomId: string): RoomControls {
     stopShare: session.stopShare,
     sendChat: session.sendChat,
     sendAttachment: (file: File) => void session.sendAttachment(file),
+    setWriting: session.setWriting,
+    toggleSounds: session.toggleSounds,
   };
 }

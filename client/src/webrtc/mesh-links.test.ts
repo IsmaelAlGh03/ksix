@@ -14,6 +14,7 @@ function peer(socketId: string, quality: PeerParticipant['quality'] = null): Pee
     micOn: true,
     cameraOn: true,
     lost: false,
+    writing: false,
   };
 }
 

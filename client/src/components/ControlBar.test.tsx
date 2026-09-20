@@ -12,12 +12,14 @@ function renderBar(overrides: Partial<Parameters<typeof ControlBar>[0]> = {}) {
     linksView: false,
     sharing: false,
     sharedBy: null,
+    soundsOn: true,
     onToggleMic: vi.fn(),
     onToggleCamera: vi.fn(),
     onToggleLinks: vi.fn(),
     onToggleShare: vi.fn(),
     onExport: vi.fn(),
     onLeave: vi.fn(),
+    onToggleSounds: vi.fn(),
     ...overrides,
   };
 
@@ -165,5 +167,24 @@ describe('ControlBar timer', () => {
     expect(button).toBeDisabled();
     await userEvent.click(button);
     expect(props.onToggleShare).not.toHaveBeenCalled();
+  });
+});
+
+describe('ControlBar sounds', () => {
+  it('names the sounds state and says so to screen readers', () => {
+    renderBar({ soundsOn: false });
+
+    expect(screen.getByRole('button', { name: 'Sounds off' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('asks to flip sounds when pressed', async () => {
+    const props = renderBar();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sounds on' }));
+
+    expect(props.onToggleSounds).toHaveBeenCalledTimes(1);
   });
 });

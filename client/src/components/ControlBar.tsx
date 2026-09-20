@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DeviceIcon, ExportIcon, LeaveIcon, LinksIcon, ScreenIcon } from './icons';
+import { DeviceIcon, ExportIcon, LeaveIcon, LinksIcon, ScreenIcon, SoundIcon } from './icons';
 import { formatDuration } from '../lib/duration';
 
 interface ControlBarProps {
@@ -10,12 +10,14 @@ interface ControlBarProps {
   linksView: boolean;
   sharing: boolean;
   sharedBy: string | null;
+  soundsOn: boolean;
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onToggleLinks: () => void;
   onToggleShare: () => void;
   onExport: () => Promise<void> | void;
   onLeave: () => void;
+  onToggleSounds: () => void;
 }
 
 const TOGGLE_BASE =
@@ -55,12 +57,14 @@ export function ControlBar({
   linksView,
   sharing,
   sharedBy,
+  soundsOn,
   onToggleMic,
   onToggleCamera,
   onToggleLinks,
   onToggleShare,
   onExport,
   onLeave,
+  onToggleSounds,
 }: ControlBarProps): JSX.Element {
   const elapsed = useElapsed(connectedAt);
   const [copying, setCopying] = useState(false);
@@ -111,6 +115,16 @@ export function ControlBar({
       >
         <LinksIcon />
         Links
+      </button>
+
+      <button
+        type="button"
+        aria-pressed={soundsOn}
+        onClick={onToggleSounds}
+        className={toggleClass(soundsOn)}
+      >
+        <SoundIcon on={soundsOn} />
+        Sounds {soundsOn ? 'on' : 'off'}
       </button>
 
       <button

@@ -7,6 +7,10 @@ interface DeviceIconProps extends IconProps {
   on: boolean;
 }
 
+interface SoundIconProps extends IconProps {
+  on: boolean;
+}
+
 const BASE = 'h-5 w-5 shrink-0';
 
 export function DeviceIcon({ device, on, className = BASE }: DeviceIconProps): JSX.Element {
@@ -132,6 +136,24 @@ export function LinksIcon({ className = BASE }: IconProps): JSX.Element {
       <circle cx="10" cy="3.5" r="1.6" fill="currentColor" stroke="none" />
       <circle cx="3.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
       <circle cx="16.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function SoundIcon({ on, className = BASE }: SoundIconProps): JSX.Element {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+    >
+      <path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z" />
+      {on && <path d="M13.5 7a4.5 4.5 0 0 1 0 6" />}
+      {!on && <path d="M3 3L17 17" />}
     </svg>
   );
 }

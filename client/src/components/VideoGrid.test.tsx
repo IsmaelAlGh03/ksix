@@ -16,6 +16,7 @@ function peers(count: number): PeerParticipant[] {
     micOn: true,
     cameraOn: true,
     lost: false,
+    writing: false,
   }));
 }
 

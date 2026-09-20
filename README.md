@@ -12,7 +12,8 @@ Video and chat go straight between browsers. The server introduces two peers and
 
 - Up to six people in a room, everyone connected to everyone
 - Green room first: name, camera and mic pickers, preview, live headcount
-- Text chat and image sharing over the DataChannel
+- Text chat and image sharing over the DataChannel, with a "Nadia is writing" line
+- Short sound cues when someone joins, leaves, or sends a message; one switch turns them off
 - Export the transcript as one self-contained HTML file
 - Screen sharing, camera stays live beside it
 - Per-link readouts: direct or relayed, RTT, packet loss, bitrate

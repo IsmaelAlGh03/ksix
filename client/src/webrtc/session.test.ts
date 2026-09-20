@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Socket } from 'socket.io-client';
 import { createMeshSession } from './session';
 
@@ -54,6 +54,11 @@ function createStubDataChannel() {
       channel.readyState = 'open';
       for (const handler of listeners.get('open') ?? []) {
         (handler as (value: unknown) => void)({});
+      }
+    },
+    receive(message: unknown) {
+      for (const handler of listeners.get('message') ?? []) {
+        (handler as (value: unknown) => void)({ data: JSON.stringify(message) });
       }
     },
   };
@@ -282,5 +287,145 @@ describe('createMeshSession', () => {
     const queued = first?.channel.send.mock.calls[0]?.[0] as string;
     expect(JSON.parse(queued)).toMatchObject({ type: 'chat', text: 'before the channels are up' });
     expect(second?.channel.send).not.toHaveBeenCalled();
+  });
+});
+
+function fakeCues() {
+  let on = true;
+  return {
+    play: vi.fn(),
+    enabled: () => on,
+    setEnabled: vi.fn((next: boolean) => {
+      on = next;
+    }),
+  };
+}
+
+async function joinedWithPeers(names: string[]) {
+  const socket = createFakeSocket();
+  const cues = fakeCues();
+  const connections: ReturnType<typeof createStubConnection>[] = [];
+  const session = createMeshSession({
+    roomId: 'test-room',
+    getSocket: () => socket as unknown as Socket,
+    getMedia: async () => emptyStream,
+    cues,
+    createConnection: () => {
+      const connection = createStubConnection();
+      connections.push(connection);
+      return connection as unknown as RTCPeerConnection;
+    },
+  });
+
+  await session.join({ displayName: 'Ada' });
+  socket.fire(
+    'existing-peers',
+    names.map((displayName, index) => ({ socketId: `peer-${index + 1}`, displayName })),
+  );
+  for (const connection of connections) connection.channel.open();
+
+  return { session, socket, cues, connections };
+}
+
+describe('sound cues', () => {
+  it('stays quiet for the peers already in the room', async () => {
+    const { cues } = await joinedWithPeers(['One', 'Two']);
+
+    expect(cues.play).not.toHaveBeenCalled();
+  });
+
+  it('plays join when someone arrives after you', async () => {
+    const { socket, cues } = await joinedWithPeers([]);
+
+    socket.fire('peer-joined', { socketId: 'peer-9', displayName: 'Nine' });
+
+    expect(cues.play).toHaveBeenCalledWith('join');
+  });
+
+  it('plays leave when someone goes', async () => {
+    const { socket, cues } = await joinedWithPeers(['One']);
+
+    socket.fire('peer-left', { socketId: 'peer-1' });
+
+    expect(cues.play).toHaveBeenCalledWith('leave');
+  });
+
+  it('plays message for a peer chat, not for your own', async () => {
+    const { session, cues, connections } = await joinedWithPeers(['One']);
+
+    session.sendChat('mine');
+    expect(cues.play).not.toHaveBeenCalled();
+
+    connections[0]?.channel.receive({ type: 'chat', id: 'p1-1', text: 'theirs', at: 1 });
+    expect(cues.play).toHaveBeenCalledWith('message');
+  });
+
+  it('exposes and flips the sounds preference', async () => {
+    const { session, cues } = await joinedWithPeers([]);
+
+    expect(session.getState().soundsOn).toBe(true);
+
+    session.toggleSounds();
+
+    expect(cues.setEnabled).toHaveBeenCalledWith(false);
+    expect(session.getState().soundsOn).toBe(false);
+  });
+});
+
+describe('writing', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('marks a peer as writing when their typing message arrives', async () => {
+    const { session, connections } = await joinedWithPeers(['One']);
+
+    connections[0]?.channel.receive({ type: 'typing', active: true });
+
+    expect(session.getState().participants[0]?.writing).toBe(true);
+  });
+
+  it('clears writing when the peer says so', async () => {
+    const { session, connections } = await joinedWithPeers(['One']);
+
+    connections[0]?.channel.receive({ type: 'typing', active: true });
+    connections[0]?.channel.receive({ type: 'typing', active: false });
+
+    expect(session.getState().participants[0]?.writing).toBe(false);
+  });
+
+  it('clears writing when their message lands', async () => {
+    const { session, connections } = await joinedWithPeers(['One']);
+
+    connections[0]?.channel.receive({ type: 'typing', active: true });
+    connections[0]?.channel.receive({ type: 'chat', id: 'p1-1', text: 'done', at: 1 });
+
+    expect(session.getState().participants[0]?.writing).toBe(false);
+  });
+
+  it('gives up on a writer who goes silent', async () => {
+    vi.useFakeTimers();
+    const { session, connections } = await joinedWithPeers(['One']);
+
+    connections[0]?.channel.receive({ type: 'typing', active: true });
+    vi.advanceTimersByTime(6_000);
+
+    expect(session.getState().participants[0]?.writing).toBe(false);
+  });
+
+  it('broadcasts a change of writing state once', async () => {
+    const { session, connections } = await joinedWithPeers(['One']);
+    const send = connections[0]?.channel.send;
+    send?.mockClear();
+
+    session.setWriting(true);
+    session.setWriting(true);
+    session.setWriting(false);
+
+    const sent = send?.mock.calls.map(([raw]) => JSON.parse(raw as string));
+    expect(sent).toEqual([
+      { type: 'typing', active: true },
+      { type: 'typing', active: false },
+    ]);
   });
 });

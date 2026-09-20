@@ -2,18 +2,22 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { Lightbox } from './Lightbox';
 import { AttachIcon } from './icons';
 import { describeAttachment } from '../webrtc/chunker';
+import { describeWriters } from '../lib/writers';
 import type { ChatMessage, MessageAttachment } from '../types';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
   onSend: (text: string) => void;
   onAttach: (file: File) => void;
+  onWriting?: (active: boolean) => void;
+  writers?: string[];
   attachmentError?: string | null;
   compact?: boolean;
 }
 
 const CAVEAT = 'You only have messages from after you joined. Nothing is kept.';
 const NEAR_BOTTOM_PX = 24;
+const WRITING_IDLE_MS = 3000;
 
 function formatTime(at: number): string {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -23,12 +27,16 @@ export function ChatPanel({
   messages,
   onSend,
   onAttach,
+  onWriting = () => {},
+  writers = [],
   attachmentError = null,
   compact = false,
 }: ChatPanelProps): JSX.Element {
   const log = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const pinned = useRef(true);
+  const writing = useRef(false);
+  const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draft, setDraft] = useState('');
   const [unread, setUnread] = useState(0);
   const [viewing, setViewing] = useState<MessageAttachment | null>(null);
@@ -63,6 +71,25 @@ export function ChatPanel({
     setUnread(0);
   }
 
+  function announce(active: boolean): void {
+    if (idle.current !== null) {
+      clearTimeout(idle.current);
+      idle.current = null;
+    }
+    if (active) idle.current = setTimeout(() => announce(false), WRITING_IDLE_MS);
+    if (writing.current === active) return;
+    writing.current = active;
+    onWriting(active);
+  }
+
+  useEffect(() => () => announce(false), []);
+
+  function edit(event: ChangeEvent<HTMLInputElement>): void {
+    const { value } = event.target;
+    setDraft(value);
+    announce(value.trim() !== '');
+  }
+
   function pick(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -73,6 +100,7 @@ export function ChatPanel({
     event.preventDefault();
     if (draft.trim() === '') return;
 
+    announce(false);
     onSend(draft);
     setDraft('');
     pinned.current = true;
@@ -145,6 +173,12 @@ export function ChatPanel({
       </div>
       )}
 
+      {!compact && (
+        <p className="mt-2 min-h-[1rem] font-mono text-[10px] tracking-[0.03em] uppercase opacity-55">
+          {describeWriters(writers)}
+        </p>
+      )}
+
       {attachmentError !== null && (
         <p role="alert" className="mt-3 font-mono text-[11px] text-alert">
           {attachmentError}
@@ -154,7 +188,7 @@ export function ChatPanel({
       <form onSubmit={submit} className="mt-3 flex gap-3">
         <input
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={edit}
           aria-label="Message"
           placeholder="Type a message…"
           className="min-w-0 flex-1 border-[1.5px] border-ink bg-transparent px-3 py-2.5 text-[14px] placeholder:opacity-45"

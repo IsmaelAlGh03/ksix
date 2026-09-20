@@ -91,6 +91,10 @@ export function parseMeshMessage(value: unknown): MeshMessage | null {
       return { type: 'presence', micOn: value.micOn, cameraOn: value.cameraOn, sharing };
     }
 
+    case 'typing':
+      if (typeof value.active !== 'boolean') return null;
+      return { type: 'typing', active: value.active };
+
     case 'stats': {
       if (!isFiniteNumber(value.at) || !Array.isArray(value.links)) return null;
       const links = value.links.map(parsePeerStat);

@@ -10,6 +10,7 @@ import {
   rejectAttachment,
   type Reassembler,
 } from './chunker';
+import { createCues, type Cues } from '../lib/cues';
 import { createChannelLink, type ChannelLink } from './datachannel';
 import { hasTurn, iceServers, loadIceServers } from './ice';
 import { parseSignalData } from './validate';
@@ -41,6 +42,7 @@ export interface MeshSessionOptions {
   getMedia?: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
   getDisplay?: () => Promise<MediaStream>;
   createConnection?: () => RTCPeerConnection;
+  cues?: Cues;
 }
 
 export interface JoinDetails {
@@ -64,11 +66,14 @@ export interface MeshSession {
   stopShare(): void;
   sendChat(text: string): void;
   sendAttachment(file: File): Promise<void>;
+  setWriting(active: boolean): void;
+  toggleSounds(): void;
 }
 
 type SocketListener = (...args: any[]) => void;
 
 const POLL_INTERVAL_MS = 2000;
+const WRITING_TIMEOUT_MS = 6000;
 
 interface PeerEntry {
   participant: Participant;
@@ -89,6 +94,8 @@ interface PeerEntry {
   recovery: RecoveryState;
   recoveryTimer: ReturnType<typeof setTimeout> | null;
   lost: boolean;
+  writing: boolean;
+  writingTimer: ReturnType<typeof setTimeout> | null;
 }
 
 export function createMeshSession(options: MeshSessionOptions): MeshSession {
@@ -100,6 +107,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       navigator.mediaDevices.getUserMedia(constraints),
     getDisplay = () => navigator.mediaDevices.getDisplayMedia({ video: true }),
     createConnection = () => new RTCPeerConnection({ iceServers: iceServers() }),
+    cues = createCues(),
   } = options;
 
   const peers = new Map<string, PeerEntry>();
@@ -119,6 +127,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
   let remoteStats: Record<string, PeerStat[]> = {};
   let attachmentError: string | null = null;
   let sentCount = 0;
+  let announcedWriting = false;
   const objectUrls: string[] = [];
   let state: SessionState = {
     status,
@@ -134,6 +143,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     mediaMode: 'full',
     micOn: false,
     cameraOn: false,
+    soundsOn: cues.enabled(),
     connectedAt: null,
   };
 
@@ -154,6 +164,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       cameraOn: entry.cameraOn,
       lost: entry.lost,
       sharing: entry.sharing,
+      writing: entry.writing,
     }));
 
     state = {
@@ -170,6 +181,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       mediaMode,
       micOn: tracksEnabled('audio'),
       cameraOn: tracksEnabled('video'),
+      soundsOn: cues.enabled(),
       connectedAt,
     };
     for (const listener of listeners) listener();
@@ -224,11 +236,30 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     return { type: 'stats', at: Date.now(), links };
   }
 
+  function clearWriting(entry: PeerEntry): void {
+    entry.writing = false;
+    if (entry.writingTimer === null) return;
+    clearTimeout(entry.writingTimer);
+    entry.writingTimer = null;
+  }
+
+  function markWriting(entry: PeerEntry): void {
+    clearWriting(entry);
+    entry.writing = true;
+    entry.writingTimer = setTimeout(() => {
+      entry.writingTimer = null;
+      entry.writing = false;
+      publish();
+    }, WRITING_TIMEOUT_MS);
+  }
+
   function receive(from: Participant, message: MeshMessage): void {
     const entry = peers.get(from.socketId);
     if (entry === undefined) return;
 
     if (message.type === 'chat') {
+      clearWriting(entry);
+      cues.play('message');
       messages = [
         ...messages,
         {
@@ -240,6 +271,9 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
           mine: false,
         },
       ];
+    } else if (message.type === 'typing') {
+      if (message.active) markWriting(entry);
+      else clearWriting(entry);
     } else if (message.type === 'presence') {
       entry.micOn = message.micOn;
       entry.cameraOn = message.cameraOn;
@@ -259,6 +293,8 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       const done = entry.inbound.end(message.id);
       if (done === null) return;
 
+      clearWriting(entry);
+      cues.play('message');
       const mime = isAllowedImage(done.mime) ? done.mime : 'application/octet-stream';
       const url = URL.createObjectURL(new Blob([done.bytes], { type: mime }));
       objectUrls.push(url);
@@ -330,11 +366,23 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     const id = `${socket?.id ?? 'local'}-${(sentCount += 1)}`;
     const at = Date.now();
 
+    setWriting(false);
     broadcast({ type: 'chat', id, text: trimmed, at });
     messages = [
       ...messages,
       { id, authorId: socket?.id ?? '', authorName: announcedName, text: trimmed, at, mine: true },
     ];
+    publish();
+  }
+
+  function setWriting(active: boolean): void {
+    if (announcedWriting === active) return;
+    announcedWriting = active;
+    broadcast({ type: 'typing', active });
+  }
+
+  function toggleSounds(): void {
+    cues.setEnabled(!cues.enabled());
     publish();
   }
 
@@ -422,6 +470,8 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       recovery: { attempts: 0, relayTried: false },
       recoveryTimer: null,
       lost: false,
+      writing: false,
+      writingTimer: null,
       inbound: createReassembler(),
       channel: createChannelLink({
         connection,
@@ -530,6 +580,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     if (entry === undefined) return;
 
     clearRecoveryTimer(entry);
+    clearWriting(entry);
     entry.channel.close();
     entry.link.close();
     peers.delete(socketId);
@@ -618,7 +669,10 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       publish();
     });
 
-    bind('peer-joined', (participant: Participant) => addPeer(participant, false));
+    bind('peer-joined', (participant: Participant) => {
+      addPeer(participant, false);
+      cues.play('join');
+    });
 
     bind('signal', ({ from, data }: { from: unknown; data: unknown }) => {
       if (typeof from !== 'string') return;
@@ -627,7 +681,10 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       peers.get(from)?.link.accept(signal).catch(reportSignalFailure);
     });
 
-    bind('peer-left', ({ socketId }: { socketId: string }) => removePeer(socketId));
+    bind('peer-left', ({ socketId }: { socketId: string }) => {
+      removePeer(socketId);
+      cues.play('leave');
+    });
 
     bind('room-full', () => {
       status = 'room-full';
@@ -659,6 +716,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     socket = null;
     status = 'left';
     connectedAt = null;
+    announcedWriting = false;
     messages = [];
     remoteStats = {};
     attachmentError = null;
@@ -690,5 +748,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
     stopShare,
     sendChat,
     sendAttachment,
+    setWriting,
+    toggleSounds,
   };
 }

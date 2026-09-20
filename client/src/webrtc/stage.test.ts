@@ -14,6 +14,7 @@ function peer(socketId: string, over: Partial<PeerParticipant> = {}): PeerPartic
     micOn: true,
     cameraOn: true,
     lost: false,
+    writing: false,
     sharing: null,
     ...over,
   };

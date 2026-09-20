@@ -61,6 +61,16 @@ describe('parseMeshMessage', () => {
     expect(parseMeshMessage({ type: 'chat', id: 'm1', text: { a: 1 }, at: 1 })).toBeNull();
   });
 
+  it('accepts a typing message', () => {
+    const message = { type: 'typing', active: true };
+
+    expect(parseMeshMessage(message)).toEqual(message);
+  });
+
+  it('rejects a typing message whose flag is not a boolean', () => {
+    expect(parseMeshMessage({ type: 'typing', active: 'yes' })).toBeNull();
+  });
+
   it('rejects an unknown message type', () => {
     expect(parseMeshMessage({ type: 'exec', id: 'm1' })).toBeNull();
   });

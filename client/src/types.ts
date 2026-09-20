@@ -15,6 +15,7 @@ export interface PeerParticipant extends Participant {
   cameraOn: boolean;
   lost: boolean;
   sharing: string | null;
+  writing: boolean;
 }
 
 export interface PeerStat {
@@ -28,6 +29,7 @@ export interface PeerStat {
 export type MeshMessage =
   | { type: 'chat'; id: string; text: string; at: number }
   | { type: 'presence'; micOn: boolean; cameraOn: boolean; sharing?: string | null }
+  | { type: 'typing'; active: boolean }
   | { type: 'stats'; at: number; links: PeerStat[] }
   | { type: 'file-meta'; id: string; name: string; mime: string; size: number; chunks: number; at: number }
   | { type: 'file-chunk'; id: string; index: number; data: string }
@@ -66,6 +68,7 @@ export interface SessionState {
   mediaMode: MediaMode;
   micOn: boolean;
   cameraOn: boolean;
+  soundsOn: boolean;
   connectedAt: number | null;
 }
 

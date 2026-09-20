@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from '../types';
 
@@ -149,5 +149,69 @@ describe('ChatPanel', () => {
     rerender(<ChatPanel messages={[message({ text: 'earlier' })]} onSend={vi.fn()} onAttach={vi.fn()} />);
 
     expect(screen.getByText('earlier')).toBeInTheDocument();
+  });
+});
+
+describe('ChatPanel writing', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('says who is writing', () => {
+    render(<ChatPanel messages={[]} writers={['Nadia']} onSend={vi.fn()} onAttach={vi.fn()} />);
+
+    expect(screen.getByText('Nadia is writing')).toBeInTheDocument();
+  });
+
+  it('keeps the line out of the compact layout', () => {
+    render(
+      <ChatPanel messages={[]} writers={['Nadia']} compact onSend={vi.fn()} onAttach={vi.fn()} />,
+    );
+
+    expect(screen.queryByText('Nadia is writing')).not.toBeInTheDocument();
+  });
+
+  it('announces writing once when a draft starts', () => {
+    const onWriting = vi.fn();
+    render(<ChatPanel messages={[]} onWriting={onWriting} onSend={vi.fn()} onAttach={vi.fn()} />);
+    const input = screen.getByLabelText('Message');
+
+    fireEvent.change(input, { target: { value: 'h' } });
+    fireEvent.change(input, { target: { value: 'he' } });
+
+    expect(onWriting.mock.calls).toEqual([[true]]);
+  });
+
+  it('withdraws writing after a pause', () => {
+    vi.useFakeTimers();
+    const onWriting = vi.fn();
+    render(<ChatPanel messages={[]} onWriting={onWriting} onSend={vi.fn()} onAttach={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'hel' } });
+    vi.advanceTimersByTime(3_000);
+
+    expect(onWriting).toHaveBeenLastCalledWith(false);
+  });
+
+  it('withdraws writing when the draft is cleared', () => {
+    const onWriting = vi.fn();
+    render(<ChatPanel messages={[]} onWriting={onWriting} onSend={vi.fn()} onAttach={vi.fn()} />);
+    const input = screen.getByLabelText('Message');
+
+    fireEvent.change(input, { target: { value: 'h' } });
+    fireEvent.change(input, { target: { value: '' } });
+
+    expect(onWriting).toHaveBeenLastCalledWith(false);
+  });
+
+  it('withdraws writing on send', () => {
+    const onWriting = vi.fn();
+    render(<ChatPanel messages={[]} onWriting={onWriting} onSend={vi.fn()} onAttach={vi.fn()} />);
+    const input = screen.getByLabelText('Message');
+
+    fireEvent.change(input, { target: { value: 'hello' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+
+    expect(onWriting).toHaveBeenLastCalledWith(false);
   });
 });

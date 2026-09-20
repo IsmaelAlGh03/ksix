@@ -43,6 +43,7 @@ export function RoomPage(): JSX.Element {
     [participants, room.remoteStats],
   );
 
+  const writers = participants.filter((peer) => peer.writing).map((peer) => peer.displayName);
   const holder = stageHolder(participants, room.localId, room.sharing);
   const held = participants.find((peer) => peer.socketId === holder) ?? null;
   const stage =
@@ -176,17 +177,21 @@ export function RoomPage(): JSX.Element {
             linksView={linksView}
             sharing={room.sharing !== null}
             sharedBy={stage === null || stage.holder === LOCAL_ID ? null : stage.name}
+            soundsOn={room.soundsOn}
             onToggleMic={room.toggleMic}
             onToggleCamera={room.toggleCamera}
             onToggleLinks={() => setLinksView((open) => !open)}
             onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
             onExport={() => saveTranscript(room.messages, roomId)}
             onLeave={room.leave}
+            onToggleSounds={room.toggleSounds}
           />
           <ChatPanel
             messages={room.messages}
             onSend={room.sendChat}
             onAttach={room.sendAttachment}
+            onWriting={room.setWriting}
+            writers={writers}
             attachmentError={room.attachmentError}
             compact={compact}
           />
