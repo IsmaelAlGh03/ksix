@@ -105,3 +105,21 @@ describe('VideoGrid', () => {
     expect(container.querySelector('[data-dimmed="true"]')).not.toBeInTheDocument();
   });
 });
+
+describe('VideoGrid mic level', () => {
+  it('hands your level and hint to your own tile only', () => {
+    const { container } = render(
+      <VideoGrid
+        localStream={null}
+        participants={peers(1)}
+        localLevel={0.4}
+        localHint="Say something and the line should move"
+      />,
+    );
+
+    const bars = container.querySelectorAll('[data-level]');
+    expect(bars).toHaveLength(1);
+    expect((bars[0] as HTMLElement).style.width).toBe('40%');
+    expect(screen.getByText('Say something and the line should move')).toBeInTheDocument();
+  });
+});

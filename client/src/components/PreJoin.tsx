@@ -3,6 +3,7 @@ import { DeviceSelect } from './DeviceSelect';
 import { DeviceIcon } from './icons';
 import { ParticipantTile } from './ParticipantTile';
 import { RoomCount } from './RoomCount';
+import { SPEAK_HINT, useMicLevel } from '../lib/use-mic-level';
 import { openMedia, type MediaMode } from '../webrtc/media';
 import { useServerStatus } from '../webrtc/useServerStatus';
 import type { JoinDetails } from '../webrtc/session';
@@ -110,6 +111,7 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
   }
 
   const server = useServerStatus();
+  const mic = useMicLevel(stream, micOn);
   const named = displayName.trim() !== '';
   const full = count !== null && count >= capacity;
 
@@ -123,6 +125,8 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
           isLocal
           micOn={micOn}
           cameraOn={cameraOn}
+          level={stream === null ? null : mic.level}
+          hint={micOn && mic.quiet ? SPEAK_HINT : null}
         />
         {mediaError !== null && (
           <div

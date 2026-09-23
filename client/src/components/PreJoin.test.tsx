@@ -7,6 +7,17 @@ const socket = { connected: true, on: vi.fn(), off: vi.fn(), connect: vi.fn() };
 
 vi.mock('../socket', () => ({ getSocket: () => socket }));
 
+const level = { report: null as ((value: number) => void) | null };
+
+vi.mock('../lib/mic-level', () => ({
+  watchMicLevel: (_stream: MediaStream, onLevel: (value: number) => void) => {
+    level.report = onLevel;
+    return () => {
+      level.report = null;
+    };
+  },
+}));
+
 function fakeStream(): MediaStream {
   const video = { kind: 'video', enabled: true, stop: vi.fn(), getSettings: () => ({ width: 640, height: 480, frameRate: 30 }) };
   const audio = { kind: 'audio', enabled: true, stop: vi.fn() };
@@ -242,5 +253,32 @@ describe('PreJoin', () => {
     await screen.findByRole('button', { name: /join/i });
 
     expect(screen.queryByText(/waking the server up/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('PreJoin mic level', () => {
+  const HINT = 'Say something and the line should move';
+
+  it('asks you to speak once the mic has been quiet a while', async () => {
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    await screen.findByLabelText('Your camera');
+    expect(screen.queryByText(HINT)).not.toBeInTheDocument();
+
+    await screen.findByText(HINT, {}, { timeout: 3000 });
+
+    act(() => level.report?.(0.6));
+
+    expect(screen.queryByText(HINT)).not.toBeInTheDocument();
+  });
+
+  it('drops the hint while the mic is off, since silence is expected then', async () => {
+    render(<PreJoin roomId="alpha" count={0} capacity={6} onJoin={vi.fn()} />);
+
+    await screen.findByLabelText('Your camera');
+    await userEvent.click(screen.getByRole('button', { name: /mic on/i }));
+    await new Promise((resolve) => setTimeout(resolve, 1700));
+
+    expect(screen.queryByText(HINT)).not.toBeInTheDocument();
   });
 });

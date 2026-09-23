@@ -211,3 +211,46 @@ describe('ParticipantTile', () => {
     expect(container.querySelector('.border-alert')).not.toBeNull();
   });
 });
+
+describe('ParticipantTile mic level', () => {
+  it('draws the level as a hairline whose width follows it', () => {
+    const { container } = render(
+      <ParticipantTile displayName="You" stream={streamWithVideo()} state="connected" isLocal level={0.6} />,
+    );
+
+    const bar = container.querySelector('[data-level]') as HTMLElement;
+    expect(bar.style.width).toBe('60%');
+  });
+
+  it('prints the hint under the level', () => {
+    render(
+      <ParticipantTile
+        displayName="You"
+        stream={streamWithVideo()}
+        state="connected"
+        isLocal
+        level={0}
+        hint="Say something and the line should move"
+      />,
+    );
+
+    expect(screen.getByText('Say something and the line should move')).toBeInTheDocument();
+  });
+
+  it('leaves the level and hint out of a strip', () => {
+    const { container } = render(
+      <ParticipantTile
+        displayName="You"
+        stream={streamWithVideo()}
+        state="connected"
+        isLocal
+        level={0.6}
+        hint="Say something and the line should move"
+        compact
+      />,
+    );
+
+    expect(container.querySelector('[data-level]')).toBeNull();
+    expect(screen.queryByText('Say something and the line should move')).not.toBeInTheDocument();
+  });
+});

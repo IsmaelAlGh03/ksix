@@ -17,6 +17,8 @@ interface ParticipantTileProps {
   dimmed?: boolean;
   fields?: string[];
   health?: number | null;
+  level?: number | null;
+  hint?: string | null;
 }
 
 const FIELD_WIDTHS = ['6.5ch', '6ch', '6ch', '6ch'];
@@ -31,6 +33,23 @@ function videoSettings(stream: MediaStream | null): MediaTrackSettings | null {
   const track = stream?.getVideoTracks()[0];
   if (track === undefined || track.enabled === false) return null;
   return track.getSettings();
+}
+
+interface HairlineProps {
+  value: number;
+  alert?: boolean;
+  level?: boolean;
+}
+
+function Hairline({ value, alert = false, level = false }: HairlineProps): JSX.Element {
+  return (
+    <span
+      aria-hidden="true"
+      data-level={level ? '' : undefined}
+      className={`mt-1 block h-0.5 ${alert ? 'bg-alert' : 'bg-ink'}`}
+      style={{ width: `${Math.round(value * 100)}%` }}
+    />
+  );
 }
 
 function hasCamera(stream: MediaStream | null): boolean {
@@ -51,6 +70,8 @@ export function ParticipantTile({
   dimmed = false,
   fields,
   health = null,
+  level = null,
+  hint = null,
 }: ParticipantTileProps): JSX.Element {
   const video = useRef<HTMLVideoElement>(null);
   const settings = videoSettings(stream);
@@ -155,12 +176,14 @@ export function ParticipantTile({
         )}
       </figcaption>
 
-      {!compact && health !== null && (
-        <span
-          aria-hidden="true"
-          className={`mt-1 block h-0.5 ${degraded ? 'bg-alert' : 'bg-ink'}`}
-          style={{ width: `${Math.round(health * 100)}%` }}
-        />
+      {!compact && health !== null && <Hairline value={health} alert={degraded} />}
+
+      {!compact && level !== null && <Hairline value={level} level />}
+
+      {!compact && level !== null && hint !== null && (
+        <span className="mt-1.5 block font-mono text-[10px] tracking-[0.03em] uppercase opacity-55">
+          {hint}
+        </span>
       )}
     </figure>
   );

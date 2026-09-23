@@ -15,6 +15,8 @@ interface VideoGridProps {
   links?: MeshLink[];
   showLinks?: boolean;
   strip?: boolean;
+  localLevel?: number | null;
+  localHint?: string | null;
   onRequiredHeight?: (height: number) => void;
 }
 
@@ -54,6 +56,8 @@ export function VideoGrid({
   links = [],
   showLinks = false,
   strip = false,
+  localLevel = null,
+  localHint = null,
   onRequiredHeight,
 }: VideoGridProps): JSX.Element {
   const box = useRef<HTMLDivElement>(null);
@@ -189,6 +193,8 @@ export function VideoGrid({
             cameraOn={cameraOn}
             dimmed={showLinks}
             compact={strip}
+            level={localLevel}
+            hint={localHint}
           />
           {participants.map((peer) => (
             <ParticipantTile

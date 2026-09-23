@@ -11,7 +11,7 @@ Video calls for up to six people. Open a link, land in a green room, join. Built
 Video and chat go straight between browsers. The server introduces two peers and then gets out of the way. It never sees a frame or a message.
 
 - Up to six people in a room, everyone connected to everyone
-- Green room first: name, camera and mic pickers, preview, live headcount
+- Green room first: name, camera and mic pickers, preview, live headcount, and a mic level line that tells you when nothing is coming through
 - Text chat and image sharing over the DataChannel, with a "Nadia is writing" line
 - Short sound cues when someone joins, leaves, or sends a message; one switch turns them off
 - Export the transcript as one self-contained HTML file

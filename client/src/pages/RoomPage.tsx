@@ -9,6 +9,7 @@ import { roomTitle } from '../lib/page-title';
 import { parseRoomId } from '../lib/room-id';
 import { saveTranscript } from '../lib/save-transcript';
 import { useDocumentTitle } from '../lib/use-document-title';
+import { SPEAK_HINT, useMicLevel } from '../lib/use-mic-level';
 import { Stage } from '../components/Stage';
 import { buildLinks, LOCAL_ID } from '../webrtc/mesh-links';
 import { stageHolder } from '../webrtc/stage';
@@ -32,6 +33,7 @@ export function RoomPage(): JSX.Element {
   useDocumentTitle(roomTitle(roomId));
   const { status, localStream, participants, mediaError } = room;
   const occupancy = useRoomCount(roomId, status === 'idle');
+  const mic = useMicLevel(localStream, room.micOn);
   const [linksView, setLinksView] = useState(false);
   const area = useRef<HTMLDivElement>(null);
   const expanded = useRef(0);
@@ -166,6 +168,8 @@ export function RoomPage(): JSX.Element {
               links={links}
               showLinks={linksView}
               strip={stage !== null}
+              localLevel={localStream === null ? null : mic.level}
+              localHint={room.micOn && mic.quiet && !mic.heard ? SPEAK_HINT : null}
               onRequiredHeight={setRequired}
             />
           </div>
