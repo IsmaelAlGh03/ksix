@@ -13,6 +13,7 @@ interface ChatPanelProps {
   writers?: string[];
   attachmentError?: string | null;
   compact?: boolean;
+  side?: boolean;
 }
 
 const CAVEAT = 'You only have messages from after you joined. Nothing is kept.';
@@ -31,6 +32,7 @@ export function ChatPanel({
   writers = [],
   attachmentError = null,
   compact = false,
+  side = false,
 }: ChatPanelProps): JSX.Element {
   const log = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -109,25 +111,36 @@ export function ChatPanel({
   return (
     <section
       aria-label="Messages"
-      className="mt-8 flex flex-col border-t-[1.5px] border-ink pt-4"
+      className={
+        side
+          ? 'flex min-h-0 min-w-0 flex-1 flex-col border-l-[1.5px] border-ink py-8 pl-6'
+          : 'mt-8 flex flex-col border-t-[1.5px] border-ink pt-4'
+      }
     >
       {!compact && (
-        <div className="flex items-baseline justify-between gap-4">
+        <div className={side ? 'flex flex-col gap-1' : 'flex items-baseline justify-between gap-4'}>
           <h2 className="font-mono text-[10px] tracking-[0.1em] uppercase opacity-60">Messages</h2>
           <p className="font-mono text-[10px] tracking-[0.03em] uppercase opacity-50">{CAVEAT}</p>
         </div>
       )}
 
       {!compact && (
-      <div className="relative">
+      <div className={side ? 'relative flex min-h-0 flex-1 flex-col' : 'relative'}>
         <div
           ref={log}
           onScroll={trackScroll}
           aria-live="polite"
-          className="mt-3 h-[6.5rem] overflow-y-auto"
+          className={side ? 'mt-3 min-h-0 flex-1 overflow-y-auto' : 'mt-3 h-[6.5rem] overflow-y-auto'}
         >
           {messages.map((message) => (
-            <p key={message.id} className="mb-2 grid grid-cols-[7rem_3.5rem_1fr] gap-3">
+            <p
+              key={message.id}
+              className={
+                side
+                  ? 'mb-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5'
+                  : 'mb-2 grid grid-cols-[7rem_3.5rem_1fr] gap-3'
+              }
+            >
               <span className="truncate text-[14px] font-medium" title={message.authorName}>
                 {message.authorName}
               </span>
@@ -135,9 +148,13 @@ export function ChatPanel({
                 {formatTime(message.at)}
               </span>
               {message.attachment === undefined ? (
-                <span className="text-[15px] leading-snug">{message.text}</span>
+                <span
+                  className={`text-[15px] leading-snug ${side ? 'col-span-2 break-words' : ''}`}
+                >
+                  {message.text}
+                </span>
               ) : (
-                <span className="flex items-center gap-3">
+                <span className={`flex items-center gap-3 ${side ? 'col-span-2' : ''}`}>
                   <button
                     type="button"
                     onClick={() => setViewing(message.attachment ?? null)}

@@ -150,6 +150,38 @@ describe('ChatPanel', () => {
 
     expect(screen.getByText('earlier')).toBeInTheDocument();
   });
+
+  it('keeps the messages readable beside the stage', () => {
+    render(
+      <ChatPanel messages={[message({ text: 'earlier' })]} onSend={vi.fn()} onAttach={vi.fn()} side />,
+    );
+
+    expect(screen.getByText('earlier')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/type a message/i)).toBeInTheDocument();
+  });
+
+  it('shows replies that arrive while it sits beside the stage', () => {
+    const { rerender } = render(
+      <ChatPanel messages={[message()]} onSend={vi.fn()} onAttach={vi.fn()} side />,
+    );
+
+    rerender(
+      <ChatPanel
+        messages={[message(), message({ id: 'm2', text: 'yes, loud and clear' })]}
+        onSend={vi.fn()}
+        onAttach={vi.fn()}
+        side
+      />,
+    );
+
+    expect(screen.getByText('yes, loud and clear')).toBeInTheDocument();
+  });
+
+  it('says who is writing beside the stage', () => {
+    render(<ChatPanel messages={[]} writers={['Nadia']} side onSend={vi.fn()} onAttach={vi.fn()} />);
+
+    expect(screen.getByText('Nadia is writing')).toBeInTheDocument();
+  });
 });
 
 describe('ChatPanel writing', () => {

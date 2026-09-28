@@ -9,6 +9,7 @@ import { roomTitle } from '../lib/page-title';
 import { parseRoomId } from '../lib/room-id';
 import { saveTranscript } from '../lib/save-transcript';
 import { useDocumentTitle } from '../lib/use-document-title';
+import { useMediaQuery } from '../lib/use-media-query';
 import { SPEAK_HINT, useMicLevel } from '../lib/use-mic-level';
 import { Stage } from '../components/Stage';
 import { buildLinks, LOCAL_ID } from '../webrtc/mesh-links';
@@ -40,6 +41,7 @@ export function RoomPage(): JSX.Element {
   const reclaimed = useRef(0);
   const [required, setRequired] = useState(0);
   const [tight, setTight] = useState(false);
+  const wide = useMediaQuery('(min-width: 1024px)');
   const links = useMemo(
     () => buildLinks(participants, room.remoteStats),
     [participants, room.remoteStats],
@@ -58,11 +60,12 @@ export function RoomPage(): JSX.Element {
   const inRoom = status === 'connecting' || status === 'connected';
   const showsCount = inRoom;
 
-  const compact = stage !== null || tight;
+  const side = stage !== null && wide;
+  const compact = (stage !== null && !wide) || tight;
 
   useEffect(() => {
     const element = area.current;
-    if (element === null) return;
+    if (element === null || side) return;
 
     const decide = (): void => {
       const height = element.clientHeight;
@@ -81,7 +84,7 @@ export function RoomPage(): JSX.Element {
     const observer = new ResizeObserver(decide);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [compact, required, inRoom]);
+  }, [compact, required, inRoom, side]);
 
   return (
     <main className="mx-auto flex h-full max-w-6xl flex-col px-6 py-8">
@@ -151,8 +154,14 @@ export function RoomPage(): JSX.Element {
       )}
 
       {showsCount && (
-        <>
-          <div ref={area} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-8">
+        <div
+          className={
+            side
+              ? 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_19rem] grid-rows-[minmax(0,1fr)_auto] gap-x-6'
+              : 'grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto_auto]'
+          }
+        >
+          <div ref={area} className="flex min-h-0 flex-col gap-6 overflow-y-auto py-8">
             {stage !== null && (
               <Stage
                 stream={stage.stream}
@@ -173,33 +182,38 @@ export function RoomPage(): JSX.Element {
               onRequiredHeight={setRequired}
             />
           </div>
-          <ControlBar
-            micOn={room.micOn}
-            cameraOn={room.cameraOn}
-            connectedAt={room.connectedAt}
-            exportable={room.messages.length > 0}
-            linksView={linksView}
-            sharing={room.sharing !== null}
-            sharedBy={stage === null || stage.holder === LOCAL_ID ? null : stage.name}
-            soundsOn={room.soundsOn}
-            onToggleMic={room.toggleMic}
-            onToggleCamera={room.toggleCamera}
-            onToggleLinks={() => setLinksView((open) => !open)}
-            onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
-            onExport={() => saveTranscript(room.messages, roomId)}
-            onLeave={room.leave}
-            onToggleSounds={room.toggleSounds}
-          />
-          <ChatPanel
-            messages={room.messages}
-            onSend={room.sendChat}
-            onAttach={room.sendAttachment}
-            onWriting={room.setWriting}
-            writers={writers}
-            attachmentError={room.attachmentError}
-            compact={compact}
-          />
-        </>
+          <div className={side ? 'col-span-2 row-start-2' : undefined}>
+            <ControlBar
+              micOn={room.micOn}
+              cameraOn={room.cameraOn}
+              connectedAt={room.connectedAt}
+              exportable={room.messages.length > 0}
+              linksView={linksView}
+              sharing={room.sharing !== null}
+              sharedBy={stage === null || stage.holder === LOCAL_ID ? null : stage.name}
+              soundsOn={room.soundsOn}
+              onToggleMic={room.toggleMic}
+              onToggleCamera={room.toggleCamera}
+              onToggleLinks={() => setLinksView((open) => !open)}
+              onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
+              onExport={() => saveTranscript(room.messages, roomId)}
+              onLeave={room.leave}
+              onToggleSounds={room.toggleSounds}
+            />
+          </div>
+          <div className={side ? 'col-start-2 row-start-1 flex min-h-0' : undefined}>
+            <ChatPanel
+              messages={room.messages}
+              onSend={room.sendChat}
+              onAttach={room.sendAttachment}
+              onWriting={room.setWriting}
+              writers={writers}
+              attachmentError={room.attachmentError}
+              compact={compact}
+              side={side}
+            />
+          </div>
+        </div>
       )}
     </main>
   );
