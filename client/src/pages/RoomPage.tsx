@@ -5,12 +5,7 @@ import { ControlBar } from '../components/ControlBar';
 import { CopyLink } from '../components/CopyLink';
 import { PreJoin } from '../components/PreJoin';
 import { VideoGrid } from '../components/VideoGrid';
-import { roomTitle } from '../lib/page-title';
-import { parseRoomId } from '../lib/room-id';
 import { saveTranscript } from '../lib/save-transcript';
-import { useDocumentTitle } from '../lib/use-document-title';
-import { useMediaQuery } from '../lib/use-media-query';
-import { SPEAK_HINT, useMicLevel } from '../lib/use-mic-level';
 import { Stage } from '../components/Stage';
 import { buildLinks, LOCAL_ID } from '../webrtc/mesh-links';
 import { stageHolder } from '../webrtc/stage';
@@ -27,27 +22,22 @@ const STATUS_LABEL: Record<SessionStatus, string> = {
 };
 
 export function RoomPage(): JSX.Element {
-  const { roomId: param } = useParams<{ roomId: string }>();
-  const roomId = parseRoomId(param ?? '') ?? '';
+  const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const room = useWebRTC(roomId);
-  useDocumentTitle(roomTitle(roomId));
+  const room = useWebRTC(roomId ?? '');
   const { status, localStream, participants, mediaError } = room;
-  const occupancy = useRoomCount(roomId, status === 'idle');
-  const mic = useMicLevel(localStream, room.micOn);
+  const occupancy = useRoomCount(roomId ?? '', status === 'idle');
   const [linksView, setLinksView] = useState(false);
   const area = useRef<HTMLDivElement>(null);
   const expanded = useRef(0);
   const reclaimed = useRef(0);
   const [required, setRequired] = useState(0);
   const [tight, setTight] = useState(false);
-  const wide = useMediaQuery('(min-width: 1024px)');
   const links = useMemo(
     () => buildLinks(participants, room.remoteStats),
     [participants, room.remoteStats],
   );
 
-  const writers = participants.filter((peer) => peer.writing).map((peer) => peer.displayName);
   const holder = stageHolder(participants, room.localId, room.sharing);
   const held = participants.find((peer) => peer.socketId === holder) ?? null;
   const stage =
@@ -60,12 +50,11 @@ export function RoomPage(): JSX.Element {
   const inRoom = status === 'connecting' || status === 'connected';
   const showsCount = inRoom;
 
-  const side = stage !== null && wide;
-  const compact = (stage !== null && !wide) || tight;
+  const compact = stage !== null || tight;
 
   useEffect(() => {
     const element = area.current;
-    if (element === null || side) return;
+    if (element === null) return;
 
     const decide = (): void => {
       const height = element.clientHeight;
@@ -84,14 +73,14 @@ export function RoomPage(): JSX.Element {
     const observer = new ResizeObserver(decide);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [compact, required, inRoom, side]);
+  }, [compact, required, inRoom]);
 
   return (
     <main className="mx-auto flex h-full max-w-6xl flex-col px-6 py-8">
       <header className="flex flex-col gap-1 border-b-[1.5px] border-ink pb-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
         <div className="flex min-w-0 items-center gap-x-2">
           <h1 className="min-w-0 truncate font-display text-xl font-extrabold tracking-tight">
-            ksix <span className="font-sans font-normal opacity-55">/ </span>
+            mesh-room <span className="font-sans font-normal opacity-55">/ </span>
             <span translate="no" className="font-sans font-normal opacity-55">
               {roomId}
             </span>
@@ -115,7 +104,7 @@ export function RoomPage(): JSX.Element {
 
       {status === 'idle' && (
         <PreJoin
-          roomId={roomId}
+          roomId={roomId ?? ''}
           count={occupancy.count}
           capacity={occupancy.capacity}
           onJoin={room.join}
@@ -154,14 +143,8 @@ export function RoomPage(): JSX.Element {
       )}
 
       {showsCount && (
-        <div
-          className={
-            side
-              ? 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_19rem] grid-rows-[minmax(0,1fr)_auto] gap-x-6'
-              : 'grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto_auto]'
-          }
-        >
-          <div ref={area} className="flex min-h-0 flex-col gap-6 overflow-y-auto py-8">
+        <>
+          <div ref={area} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-8">
             {stage !== null && (
               <Stage
                 stream={stage.stream}
@@ -177,43 +160,34 @@ export function RoomPage(): JSX.Element {
               links={links}
               showLinks={linksView}
               strip={stage !== null}
-              localLevel={localStream === null ? null : mic.level}
-              localHint={room.micOn && mic.quiet && !mic.heard ? SPEAK_HINT : null}
               onRequiredHeight={setRequired}
             />
           </div>
-          <div className={side ? 'col-span-2 row-start-2' : undefined}>
-            <ControlBar
-              micOn={room.micOn}
-              cameraOn={room.cameraOn}
-              connectedAt={room.connectedAt}
-              exportable={room.messages.length > 0}
-              linksView={linksView}
-              sharing={room.sharing !== null}
-              sharedBy={stage === null || stage.holder === LOCAL_ID ? null : stage.name}
-              soundsOn={room.soundsOn}
-              onToggleMic={room.toggleMic}
-              onToggleCamera={room.toggleCamera}
-              onToggleLinks={() => setLinksView((open) => !open)}
-              onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
-              onExport={() => saveTranscript(room.messages, roomId)}
-              onLeave={room.leave}
-              onToggleSounds={room.toggleSounds}
-            />
-          </div>
-          <div className={side ? 'col-start-2 row-start-1 flex min-h-0' : undefined}>
-            <ChatPanel
-              messages={room.messages}
-              onSend={room.sendChat}
-              onAttach={room.sendAttachment}
-              onWriting={room.setWriting}
-              writers={writers}
-              attachmentError={room.attachmentError}
-              compact={compact}
-              side={side}
-            />
-          </div>
-        </div>
+          <ControlBar
+            micOn={room.micOn}
+            cameraOn={room.cameraOn}
+            connectedAt={room.connectedAt}
+            exportable={room.messages.length > 0}
+            linksView={linksView}
+            sharing={room.sharing !== null}
+            sharedBy={stage === null || stage.holder === LOCAL_ID ? null : stage.name}
+            onToggleMic={room.toggleMic}
+            onToggleCamera={room.toggleCamera}
+            onToggleLinks={() => setLinksView((open) => !open)}
+            onToggleShare={() => void (room.sharing === null ? room.startShare() : room.stopShare())}
+            onExport={() => saveTranscript(room.messages, roomId ?? '')}
+            onLeave={room.leave}
+            soundsOn={room.soundsOn}
+            onToggleSounds={room.toggleSounds}
+          ></ControlBar>
+          <ChatPanel
+            messages={room.messages}
+            onSend={room.sendChat}
+            onAttach={room.sendAttachment}
+            attachmentError={room.attachmentError}
+            compact={compact}
+          ></ChatPanel>
+        </>
       )}
     </main>
   );

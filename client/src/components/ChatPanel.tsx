@@ -138,7 +138,7 @@ export function ChatPanel({
               className={
                 side
                   ? 'mb-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5'
-                  : 'mb-2 grid grid-cols-[7rem_3.5rem_1fr] gap-3'
+                  : 'mb-2 grid grid-cols-[7rem_3.5rem_minmax(0,1fr)] gap-3'
               }
             >
               <span className="truncate text-[14px] font-medium" title={message.authorName}>
@@ -149,7 +149,7 @@ export function ChatPanel({
               </span>
               {message.attachment === undefined ? (
                 <span
-                  className={`text-[15px] leading-snug ${side ? 'col-span-2 break-words' : ''}`}
+                  className={`text-[15px] leading-snug break-words ${side ? 'col-span-2' : ''}`}
                 >
                   {message.text}
                 </span>
@@ -166,7 +166,7 @@ export function ChatPanel({
                       className="block h-10 w-16 object-cover"
                     />
                   </button>
-                  <span className="font-mono text-[11px] tracking-[0.04em] opacity-65">
+                  <span className="min-w-0 font-mono text-[11px] tracking-[0.04em] break-words opacity-65">
                     {describeAttachment({
                       name: message.attachment.name,
                       size: message.attachment.size,
