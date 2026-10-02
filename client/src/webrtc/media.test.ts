@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { describeMediaError, openMedia, readMediaPermission } from './media';
+import { describeMediaError, openMedia, readMediaPermission, VOICE } from './media';
 
 const stream = { id: 'fake' } as unknown as MediaStream;
 const fail = (name: string, message = 'no'): DOMException => new DOMException(message, name);
@@ -12,7 +12,11 @@ describe('openMedia', () => {
 
     expect(result).toEqual({ stream, mode: 'full', error: null });
     expect(request).toHaveBeenCalledOnce();
-    expect(request).toHaveBeenCalledWith({ video: true, audio: true });
+    expect(request).toHaveBeenCalledWith({ video: true, audio: VOICE });
+  });
+
+  it('asks for echo cancellation, noise suppression and gain control', () => {
+    expect(VOICE).toEqual({ echoCancellation: true, noiseSuppression: true, autoGainControl: true });
   });
 
   it('falls back to audio when the camera is refused', async () => {
@@ -26,7 +30,7 @@ describe('openMedia', () => {
     expect(result.mode).toBe('audio-only');
     expect(result.stream).toBe(stream);
     expect(result.error).toBe('Another app is using your camera. Close it, then try again.');
-    expect(request).toHaveBeenNthCalledWith(2, { audio: true });
+    expect(request).toHaveBeenNthCalledWith(2, { audio: VOICE });
   });
 
   it('falls all the way to view-only when both are refused', async () => {

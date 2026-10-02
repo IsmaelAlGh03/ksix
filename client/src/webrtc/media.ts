@@ -17,7 +17,13 @@ type MediaRequest = (constraints: MediaStreamConstraints) => Promise<MediaStream
 
 type PermissionReader = () => Promise<MediaPermission>;
 
-const BOTH: MediaWanted = { video: true, audio: true };
+export const VOICE: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+};
+
+const BOTH: MediaWanted = { video: true, audio: VOICE };
 
 export async function readMediaPermission(): Promise<MediaPermission> {
   try {
