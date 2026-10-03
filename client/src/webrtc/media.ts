@@ -23,7 +23,13 @@ export const VOICE: MediaTrackConstraints = {
   autoGainControl: true,
 };
 
-const BOTH: MediaWanted = { video: true, audio: VOICE };
+export const CAMERA: MediaTrackConstraints = {
+  width: { ideal: 1280 },
+  height: { ideal: 720 },
+  frameRate: { ideal: 30 },
+};
+
+const BOTH: MediaWanted = { video: CAMERA, audio: VOICE };
 
 export async function readMediaPermission(): Promise<MediaPermission> {
   try {

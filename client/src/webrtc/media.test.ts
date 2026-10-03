@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { describeMediaError, openMedia, readMediaPermission, VOICE } from './media';
+import { CAMERA, describeMediaError, openMedia, readMediaPermission, VOICE } from './media';
 
 const stream = { id: 'fake' } as unknown as MediaStream;
 const fail = (name: string, message = 'no'): DOMException => new DOMException(message, name);
@@ -12,11 +12,19 @@ describe('openMedia', () => {
 
     expect(result).toEqual({ stream, mode: 'full', error: null });
     expect(request).toHaveBeenCalledOnce();
-    expect(request).toHaveBeenCalledWith({ video: true, audio: VOICE });
+    expect(request).toHaveBeenCalledWith({ video: CAMERA, audio: VOICE });
   });
 
   it('asks for echo cancellation, noise suppression and gain control', () => {
     expect(VOICE).toEqual({ echoCancellation: true, noiseSuppression: true, autoGainControl: true });
+  });
+
+  it('asks for 720p at 30fps without refusing a camera that cannot do it', () => {
+    expect(CAMERA).toEqual({
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: { ideal: 30 },
+    });
   });
 
   it('falls back to audio when the camera is refused', async () => {

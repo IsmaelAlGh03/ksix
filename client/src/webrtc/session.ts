@@ -11,6 +11,7 @@ import {
   type Reassembler,
 } from './chunker';
 import { createCues, type Cues } from '../lib/cues';
+import { preferVideoCodec } from './codecs';
 import { createChannelLink, type ChannelLink } from './datachannel';
 import { hasTurn, iceServers, loadIceServers } from './ice';
 import { parseSignalData } from './validate';
@@ -417,7 +418,10 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
 
     screenStream = display;
     track.addEventListener('ended', stopShare);
-    for (const entry of peers.values()) entry.connection.addTrack(track, display);
+    for (const entry of peers.values()) {
+      entry.connection.addTrack(track, display);
+      preferVideoCodec(entry.connection);
+    }
 
     broadcast(presence());
     yieldStage();
@@ -513,6 +517,7 @@ export function createMeshSession(options: MeshSessionOptions): MeshSession {
       connection.addTransceiver('video', { direction: 'recvonly' });
       connection.addTransceiver('audio', { direction: 'recvonly' });
     }
+    preferVideoCodec(connection);
 
     publish();
   }

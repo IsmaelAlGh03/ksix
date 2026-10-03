@@ -4,7 +4,7 @@ import { DeviceIcon } from './icons';
 import { ParticipantTile } from './ParticipantTile';
 import { RoomCount } from './RoomCount';
 import { SPEAK_HINT, useMicLevel } from '../lib/use-mic-level';
-import { openMedia, VOICE, type MediaMode } from '../webrtc/media';
+import { CAMERA, openMedia, VOICE, type MediaMode } from '../webrtc/media';
 import { useServerStatus } from '../webrtc/useServerStatus';
 import type { JoinDetails } from '../webrtc/session';
 
@@ -56,7 +56,7 @@ export function PreJoin({ roomId, count, capacity, onJoin }: PreJoinProps): JSX.
       const opened = await openMedia(
         (constraints) => navigator.mediaDevices.getUserMedia(constraints),
         {
-          video: cameraId === '' ? true : { deviceId: { exact: cameraId } },
+          video: cameraId === '' ? CAMERA : { ...CAMERA, deviceId: { exact: cameraId } },
           audio: microphoneId === '' ? VOICE : { ...VOICE, deviceId: { exact: microphoneId } },
         },
       );
