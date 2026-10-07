@@ -17,6 +17,7 @@ export async function startServer(port: number = env.port): Promise<RunningServe
   const http = createServer(createApp());
   const io = new IOServer(http, {
     cors: { origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) },
+    allowRequest: (req, cb) => cb(null, isAllowedOrigin(req.headers.origin)),
     serveClient: false,
     maxHttpBufferSize: MAX_SIGNAL_BYTES,
   });

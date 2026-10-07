@@ -27,6 +27,7 @@ describe('server harness', () => {
   it('accepts a real client socket connection', async () => {
     const client: Socket = ioClient(`http://localhost:${server.port}`, {
       transports: ['websocket'],
+      extraHeaders: { origin: 'http://localhost:5173' },
     });
 
     try {

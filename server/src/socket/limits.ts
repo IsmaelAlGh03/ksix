@@ -26,6 +26,41 @@ export function createTokenBucket(
   };
 }
 
+export interface KeyedLimiter {
+  take(key: string, now?: number): boolean;
+  size(): number;
+}
+
+export function createKeyedLimiter(
+  capacity: number,
+  windowMs: number,
+  maxKeys: number = 10_000,
+): KeyedLimiter {
+  const windows = new Map<string, { count: number; start: number }>();
+
+  function prune(now: number): void {
+    for (const [key, entry] of windows) {
+      if (now - entry.start >= windowMs) windows.delete(key);
+    }
+  }
+
+  return {
+    take(key, now = Date.now()) {
+      const entry = windows.get(key);
+      if (entry === undefined || now - entry.start >= windowMs) {
+        if (windows.size >= maxKeys) prune(now);
+        if (windows.size >= maxKeys) return false;
+        windows.set(key, { count: 1, start: now });
+        return true;
+      }
+      if (entry.count >= capacity) return false;
+      entry.count += 1;
+      return true;
+    },
+    size: () => windows.size,
+  };
+}
+
 export interface ConnectionCounter {
   admit(ip: string): boolean;
   release(ip: string): void;

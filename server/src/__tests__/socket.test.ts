@@ -3,6 +3,8 @@ import { io as ioClient, type Socket } from 'socket.io-client';
 import { startServer, type RunningServer } from '../index';
 import { MAX_ROOM_SIZE, type Participant } from '../rooms';
 
+const ALLOWED_ORIGIN = 'http://localhost:5173';
+
 let server: RunningServer;
 let clients: Socket[] = [];
 
@@ -30,7 +32,10 @@ function silence(socket: Socket, event: string, windowMs = 250): Promise<void> {
 }
 
 async function connect(): Promise<Socket> {
-  const client = ioClient(`http://localhost:${server.port}`, { transports: ['websocket'] });
+  const client = ioClient(`http://localhost:${server.port}`, {
+    transports: ['websocket'],
+    extraHeaders: { origin: ALLOWED_ORIGIN },
+  });
   clients.push(client);
   await once(client, 'connect');
   return client;
@@ -345,5 +350,25 @@ describe('watching a room without joining it', () => {
     client.emit('join-room', { roomId: 'Not A Room/../x', displayName: 'Ada' });
 
     await expect(quiet).resolves.toBeUndefined();
+  });
+});
+
+describe('origin check on the handshake', () => {
+  async function refused(extraHeaders: Record<string, string>): Promise<Error> {
+    const client = ioClient(`http://localhost:${server.port}`, {
+      transports: ['websocket'],
+      reconnection: false,
+      extraHeaders,
+    });
+    clients.push(client);
+    return once<Error>(client, 'connect_error');
+  }
+
+  it('refuses a websocket that sends no origin', async () => {
+    await expect(refused({})).resolves.toBeInstanceOf(Error);
+  });
+
+  it('refuses a websocket from a site that is not on the list', async () => {
+    await expect(refused({ origin: 'https://evil.example' })).resolves.toBeInstanceOf(Error);
   });
 });
